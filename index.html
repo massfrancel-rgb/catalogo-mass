@@ -43,6 +43,8 @@ header.top{position:sticky;top:0;z-index:10;background:var(--dark);color:#F2EEE5
 .brand h1{margin:0;font-family:var(--font-display);font-weight:800;font-size:19px;line-height:1.05;letter-spacing:.02em}
 .brand small{display:block;color:#CDBF9C;font-size:13px;font-weight:600;letter-spacing:.04em}
 .brand .grow{flex:1;min-width:0}
+.brand h1,.brand small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:420px){.brand{gap:8px}.brand img{height:42px}.brand h1{font-size:17px;white-space:normal}.brand small{display:none}.cartbtn{padding:0 10px}}
 .cartbtn{position:relative;display:inline-flex;align-items:center;gap:8px;height:46px;padding:0 14px;border-radius:12px;
   background:var(--gold);color:#1A1814;border:0;font-weight:800;cursor:pointer;flex:0 0 auto}
 .cartbtn svg{width:22px;height:22px}
@@ -149,6 +151,29 @@ footer .admin{margin-left:auto;background:none;border:1px solid #3A352C;color:#A
 ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;
   background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:700;font-size:15px;max-width:calc(100% - 32px)}
+.userbtn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:46px;min-width:46px;padding:0 12px;border-radius:12px;
+  background:#2A261F;color:#F3E9CF;border:1.5px solid #3A352C;font-weight:700;cursor:pointer;flex:0 0 auto;max-width:150px}
+.userbtn svg{width:22px;height:22px;flex:0 0 auto}
+.userbtn .lbl{display:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (min-width:640px){.userbtn .lbl{display:inline}}
+.userbtn.on{border-color:var(--gold)}
+.tabs{display:flex;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:4px}
+.tabs button{flex:1;min-height:40px;border:0;border-radius:9px;background:transparent;font-weight:700;cursor:pointer;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.form{display:flex;flex-direction:column;gap:12px}
+.err{background:var(--warn-bg);color:var(--warn-fg);border-radius:10px;padding:10px 12px;font-weight:700;font-size:14px}
+.okmsg{background:var(--ok-bg);color:var(--ok-fg);border-radius:10px;padding:10px 12px;font-weight:700;font-size:14px}
+.linkbtn{background:none;border:0;color:var(--gold-ink);font-weight:700;cursor:pointer;padding:6px 0;text-align:left;text-decoration:underline}
+.quien{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--gold-soft);font-size:15px}
+.quien b{overflow-wrap:anywhere}
+.ped{border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.ped .top{display:flex;justify-content:space-between;gap:8px;font-weight:800}
+.ped pre{margin:0;white-space:pre-wrap;font:inherit;font-size:14px;color:var(--muted)}
+.cli{border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:start}
+.cli .nm{font-weight:800;overflow-wrap:anywhere}
+.cli .dt{font-size:14px;color:var(--muted);overflow-wrap:anywhere}
+.cli .btn{grid-row:1/span 3;grid-column:2;min-height:40px;padding:0 12px;font-size:14px}
+.btn.danger{border-color:var(--warn-fg);color:var(--warn-fg)}
 .install{background:var(--gold-soft);border-bottom:1px solid var(--line)}
 .install .wrap{display:flex;align-items:center;gap:10px;padding-block:8px;font-size:15px}
 .install .sp{flex:1}
@@ -161,6 +186,10 @@ ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
     <div class="brand">
       <img src="logo_mass.png" alt="Logo MASS FERRETERÍA" width="40" height="46">
       <div class="grow"><h1>MASS FERRETERÍA</h1><small>Catálogo de productos</small></div>
+      <button type="button" class="userbtn" id="userBtn" aria-label="Mi cuenta" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
+        <span class="lbl" id="userLbl">Ingresar</span>
+      </button>
       <button type="button" class="cartbtn" id="cartBtn" aria-label="Ver mi pedido">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.6 12.2a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.5L21.5 8H6.2"/></svg>
         <span class="lbl">Mi pedido</span><span class="n" id="cartN">0</span>
@@ -191,6 +220,7 @@ ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
     <span class="chip" id="admPend">Sin cambios por publicar</span>
     <span class="sp"></span>
     <label class="btn primary">Actualizar desde Anfibus<input id="importFile" type="file" accept=".xls,.xlsx"></label>
+    <button type="button" class="btn" id="clientesBtn" hidden>Clientes</button>
     <button type="button" class="btn dark" id="exportBtn">Publicar cambios</button>
     <button type="button" class="btn quiet" id="adminExit">Salir</button>
   </div>
@@ -241,7 +271,8 @@ ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
       <div class="total"><span>Total</span><span id="cartTotal">$0.00</span></div>
       <p class="hint" style="margin:4px 0 14px">Precios referenciales. Te confirmamos el valor final y la disponibilidad por WhatsApp.</p>
       <div style="display:flex;flex-direction:column;gap:12px">
-        <label>Tu nombre<input id="cNombre" autocomplete="name" maxlength="80"></label>
+        <div id="cartQuien"></div>
+        <label id="cNombreWrap">Tu nombre<input id="cNombre" autocomplete="name" maxlength="80"></label>
         <div class="seg" role="radiogroup" aria-label="Forma de entrega">
           <label><input type="radio" name="ent" value="retiro" checked> Retiro en local</label>
           <label><input type="radio" name="ent" value="envio"> Envío</label>
@@ -317,12 +348,100 @@ ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
   </div>
 </div>
 
+<!-- ingresar / crear cuenta -->
+<div class="sheet" id="authSheet" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <div class="phead"><h2 id="authTitle">Mi cuenta</h2><button type="button" class="x" data-close aria-label="Cerrar">✕</button></div>
+    <div class="tabs" role="tablist" id="authTabs">
+      <button type="button" role="tab" data-tab="in" aria-selected="true">Ingresar</button>
+      <button type="button" role="tab" data-tab="reg" aria-selected="false">Crear cuenta</button>
+    </div>
+    <div class="err" id="authErr" hidden></div>
+    <div class="okmsg" id="authOk" hidden></div>
+
+    <form class="form" id="fIn" novalidate>
+      <label>Correo<input id="inCorreo" type="email" autocomplete="email" inputmode="email" maxlength="120"></label>
+      <label>Clave<input id="inClave" type="password" autocomplete="current-password" maxlength="60"></label>
+      <button type="submit" class="btn primary">Ingresar</button>
+      <button type="button" class="linkbtn" id="aOlvide">Olvidé mi clave</button>
+    </form>
+
+    <form class="form" id="fReg" novalidate hidden>
+      <label>Correo<input id="rCorreo" type="email" autocomplete="email" inputmode="email" maxlength="120"></label>
+      <label>Crea una clave<input id="rClave" type="password" autocomplete="new-password" maxlength="60"><span class="hint">Mínimo 6 caracteres.</span></label>
+      <label>Repite la clave<input id="rClave2" type="password" autocomplete="new-password" maxlength="60"></label>
+      <label>Nombre completo<input id="rNombre" autocomplete="name" maxlength="80"></label>
+      <label>Teléfono / WhatsApp<input id="rTel" type="tel" autocomplete="tel" inputmode="tel" maxlength="20"></label>
+      <label>Cédula o RUC <span class="hint">(opcional, para tu factura)</span><input id="rRuc" inputmode="numeric" maxlength="13"></label>
+      <label>Dirección de entrega <span class="hint">(opcional)</span><textarea id="rDir" maxlength="250"></textarea></label>
+      <button type="submit" class="btn primary">Crear mi cuenta</button>
+      <span class="hint">Tus datos solo los usa MASS FERRETERÍA para atender tus pedidos.</span>
+    </form>
+
+    <form class="form" id="fOlv" novalidate hidden>
+      <p style="margin:0">Escribe tu correo y te enviaremos un código para crear una clave nueva.</p>
+      <label>Correo<input id="oCorreo" type="email" autocomplete="email" inputmode="email" maxlength="120"></label>
+      <button type="submit" class="btn primary" id="oEnviar">Enviarme el código</button>
+      <div id="oPaso2" class="form" hidden>
+        <label>Código que llegó a tu correo<input id="oCodigo" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></label>
+        <label>Clave nueva<input id="oClave" type="password" autocomplete="new-password" maxlength="60"></label>
+        <button type="button" class="btn primary" id="oCambiar">Cambiar clave</button>
+      </div>
+      <button type="button" class="linkbtn" id="aVolver">Volver a ingresar</button>
+    </form>
+  </div>
+</div>
+
+<!-- mi cuenta -->
+<div class="sheet" id="cuentaSheet" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="cuentaTitle">
+    <div class="phead"><h2 id="cuentaTitle">Mi cuenta</h2><button type="button" class="x" data-close aria-label="Cerrar">✕</button></div>
+    <div class="tabs" role="tablist" id="cuentaTabs">
+      <button type="button" role="tab" data-tab="datos" aria-selected="true">Mis datos</button>
+      <button type="button" role="tab" data-tab="peds" aria-selected="false">Mis pedidos</button>
+    </div>
+    <div class="err" id="cuentaErr" hidden></div>
+    <form class="form" id="fDatos" novalidate>
+      <span class="hint" id="cuCorreo"></span>
+      <label>Nombre completo<input id="cuNombre" autocomplete="name" maxlength="80"></label>
+      <label>Teléfono / WhatsApp<input id="cuTel" type="tel" autocomplete="tel" inputmode="tel" maxlength="20"></label>
+      <label>Cédula o RUC<input id="cuRuc" inputmode="numeric" maxlength="13"></label>
+      <label>Dirección de entrega<textarea id="cuDir" maxlength="250"></textarea></label>
+      <div class="btns">
+        <button type="button" class="btn quiet" id="cuSalir">Cerrar sesión</button>
+        <button type="submit" class="btn primary grow">Guardar mis datos</button>
+      </div>
+    </form>
+    <div id="cuPeds" class="form" hidden></div>
+  </div>
+</div>
+
+<!-- clientes (admin) -->
+<div class="sheet" id="cliSheet" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="cliTitle">
+    <div class="phead"><h2 id="cliTitle">Clientes registrados</h2><button type="button" class="x" data-close aria-label="Cerrar">✕</button></div>
+    <form class="form" id="cliClaveForm" novalidate hidden>
+      <p style="margin:0">Escribe tu clave de administrador para ver los clientes.</p>
+      <label>Clave<input id="cliClave" type="password" inputmode="numeric" autocomplete="off" maxlength="40"></label>
+      <button type="submit" class="btn primary">Ver clientes</button>
+    </form>
+    <div class="err" id="cliErr" hidden></div>
+    <div id="cliCuerpo" class="form" hidden>
+      <input id="cliQ" type="search" placeholder="Buscar por nombre, correo o teléfono…" aria-label="Buscar clientes" autocomplete="off">
+      <span class="hint" id="cliN"></span>
+      <div id="cliLista" class="form"></div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script>
 (function(){
   'use strict';
   const WA = '593959920159';
+  // Dirección del script de Google que guarda los clientes (se llena al publicar el script).
+  const API = 'https://script.google.com/macros/s/AKfycbzVIaZ_FvVhF0yL1XSc7454vSweBpokS9i-3xnmf6hq5MJGrIIYJXWD7DLWJ07goz1mCg/exec';
   const PAGE = 40;
   const $ = (id) => document.getElementById(id);
   const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -337,7 +456,8 @@ ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
   let limite = PAGE, admin = false;
   let cart = ls.get('mass_cart', {});           // code -> cantidad
   let fotosLocales = {};                        // code -> objectURL (admin, pendientes)
-  let editando = null, pendienteImp = null;
+  let editando = null, pendienteImp = null, pinAdmin = '';
+  let sesion = ls.get('mass_sesion', null);     // { token, perfil }
 
   function toast(msg){
     const t = $('toast'); t.textContent = msg; t.hidden = false;
@@ -550,31 +670,59 @@ ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
     $('cartTotal').textContent = money(total);
     $('cartEmpty').hidden = codes.length > 0;
     $('cartForm').hidden = codes.length === 0;
+    pintarQuien();
+  }
+  function pintarQuien(){
+    const box = $('cartQuien'); box.replaceChildren();
+    if (sesion){
+      const q = el('div', 'quien');
+      q.append(document.createTextNode('Pedido a nombre de '), el('b', null, sesion.perfil.nombre));
+      box.appendChild(q);
+      $('cNombreWrap').hidden = true;
+    } else {
+      $('cNombreWrap').hidden = false;
+      if (API){
+        const b = el('button', 'linkbtn', '¿Tienes cuenta? Ingresa o regístrate para no volver a escribir tus datos');
+        b.type = 'button'; b.addEventListener('click', () => abrirAuth('in'));
+        box.appendChild(b);
+      }
+    }
   }
   document.querySelectorAll('input[name="ent"]').forEach((r) => r.addEventListener('change', () => {
     $('dirWrap').hidden = document.querySelector('input[name="ent"]:checked').value !== 'envio';
   }));
   const cli = ls.get('mass_cliente', {});
-  $('cNombre').value = cli.n || ''; $('cDir').value = cli.d || '';
+  $('cNombre').value = cli.n || ''; $('cDir').value = (sesion && sesion.perfil.dir) || cli.d || '';
 
   $('cartSend').addEventListener('click', () => {
     const codes = Object.keys(cart).filter((c) => byCode[c]);
     if (!codes.length) return;
-    const nombre = $('cNombre').value.trim();
+    const pf = sesion ? sesion.perfil : null;
+    const nombre = pf ? pf.nombre : $('cNombre').value.trim();
     if (!nombre){ $('cNombre').focus(); toast('Escribe tu nombre para enviar el pedido'); return; }
     const envio = document.querySelector('input[name="ent"]:checked').value === 'envio';
     const dir = $('cDir').value.trim();
     if (envio && !dir){ $('cDir').focus(); toast('Escribe la dirección de entrega'); return; }
-    ls.set('mass_cliente', { n: nombre, d: dir });
+    if (!pf) ls.set('mass_cliente', { n: nombre, d: dir });
     let total = 0;
     const lineas = codes.map((c) => {
       const p = byCode[c], q = cart[c]; total += p.pvp * q;
       return '• ' + q + ' x ' + p.nombre + ' (cód. ' + p.code + ')' + (p.pvp > 0 ? ' — ' + money(p.pvp * q) : ' — consultar precio');
     });
-    const msg = ['*Pedido desde el catálogo MASS*', '', 'Cliente: ' + nombre, envio ? 'Entrega: envío a ' + dir : 'Entrega: retiro en el local', '',
-      ...lineas, '', '*Total referencial: ' + money(total) + '*'];
+    const entrega = envio ? 'envío a ' + dir : 'retiro en el local';
+    const msg = ['*Pedido desde el catálogo MASS*', '', 'Cliente: ' + nombre];
+    if (pf){
+      if (pf.tel) msg.push('Teléfono: ' + pf.tel);
+      if (pf.ruc) msg.push('Cédula/RUC: ' + pf.ruc);
+      msg.push('Correo: ' + pf.correo + ' (cliente registrado)');
+    }
+    msg.push('Entrega: ' + entrega, '', ...lineas, '', '*Total referencial: ' + money(total) + '*');
     const nota = $('cNota').value.trim(); if (nota) msg.push('', 'Nota: ' + nota);
     window.open('https://wa.me/' + WA + '?text=' + encodeURIComponent(msg.join('\n')), '_blank', 'noopener');
+    if (pf){
+      api({ accion: 'pedido', token: sesion.token, entrega, nota, total,
+        items: codes.map((c) => ({ c, n: byCode[c].nombre, q: cart[c], p: byCode[c].pvp })) }, true).catch(() => {});
+    }
   });
   $('cartClear').addEventListener('click', () => {
     if (!confirm('¿Vaciar todo el pedido?')) return;
@@ -628,16 +776,17 @@ ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
       if (v !== $('pinIn2').value.trim()){ toast('Las claves no coinciden'); return; }
       ls.set('mass_pin', await sha(v));
     } else if (guardada !== await sha(v)){ toast('Clave incorrecta'); $('pinIn').value = ''; return; }
+    pinAdmin = v;
     cerrar('pinSheet'); entrarAdmin();
   });
   async function entrarAdmin(){
     admin = true; sessionStorage.setItem('mass_admin', '1');
-    $('adminBar').hidden = false; $('tgSinFoto').hidden = false;
+    $('adminBar').hidden = false; $('tgSinFoto').hidden = false; $('clientesBtn').hidden = !API;
     await cargarFotosLocales(); pintarPendientes(); render();
     toast('Modo administrador activo');
   }
   $('adminExit').addEventListener('click', () => {
-    admin = false; sessionStorage.removeItem('mass_admin');
+    admin = false; pinAdmin = ''; sessionStorage.removeItem('mass_admin');
     $('adminBar').hidden = true; $('tgSinFoto').hidden = true; $('tgSinFoto').setAttribute('aria-pressed', 'false');
     render();
   });
@@ -799,6 +948,231 @@ ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
     ls.del('mass_cat_local'); pintarPendientes(); cerrar('pubSheet'); render();
     toast('Listo. En unos minutos todos verán los cambios.');
   });
+
+  // ---------- cuentas de clientes ----------
+  async function api(datos, segundoPlano){
+    if (!API) throw new Error('Las cuentas aún no están activadas.');
+    let r;
+    try {
+      r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(datos), keepalive: !!segundoPlano });
+    } catch (e) { throw new Error('Sin conexión. Revisa tu internet e intenta otra vez.'); }
+    let j;
+    try { j = await r.json(); } catch (e) { throw new Error('El servidor no respondió bien. Intenta otra vez.'); }
+    if (j && j.salir) cerrarSesion(true);
+    return j;
+  }
+  function guardarSesion(token, perfil){
+    sesion = { token, perfil }; ls.set('mass_sesion', sesion); pintarUsuario(); pintarQuien();
+    if (perfil.dir && !$('cDir').value) $('cDir').value = perfil.dir;
+  }
+  function cerrarSesion(silencio){
+    sesion = null; ls.del('mass_sesion'); pintarUsuario(); pintarQuien();
+    if (!$('cuentaSheet').hidden) cerrar('cuentaSheet');
+    if (!silencio) toast('Sesión cerrada');
+  }
+  function pintarUsuario(){
+    const b = $('userBtn'); b.hidden = !API;
+    const n = sesion ? sesion.perfil.nombre.split(' ')[0] : 'Ingresar';
+    $('userLbl').textContent = n;
+    b.classList.toggle('on', !!sesion);
+    b.setAttribute('aria-label', sesion ? 'Mi cuenta: ' + sesion.perfil.nombre : 'Ingresar o crear cuenta');
+  }
+  function mostrarMsg(id, txt){ const e = $(id); e.textContent = txt || ''; e.hidden = !txt; }
+  function ocupado(btn, si, txt){
+    if (si){ btn.dataset.t = btn.textContent; btn.textContent = txt || 'Un momento…'; btn.disabled = true; }
+    else { btn.textContent = btn.dataset.t || btn.textContent; btn.disabled = false; }
+  }
+  const correoValido = (c) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(c);
+
+  function abrirAuth(tab){
+    if (!$('cartSheet').hidden) cerrar('cartSheet');
+    mostrarAuth(tab || 'in'); abrir('authSheet');
+  }
+  function mostrarAuth(tab){
+    mostrarMsg('authErr'); mostrarMsg('authOk');
+    $('authTabs').hidden = tab === 'olv';
+    $('authTabs').querySelectorAll('button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
+    $('fIn').hidden = tab !== 'in'; $('fReg').hidden = tab !== 'reg'; $('fOlv').hidden = tab !== 'olv';
+    $('authTitle').textContent = tab === 'reg' ? 'Crear cuenta' : tab === 'olv' ? 'Recuperar clave' : 'Ingresar';
+    const f = { in: 'inCorreo', reg: 'rCorreo', olv: 'oCorreo' }[tab];
+    setTimeout(() => $(f).focus(), 40);
+  }
+  $('authTabs').addEventListener('click', (e) => { const b = e.target.closest('button[data-tab]'); if (b) mostrarAuth(b.dataset.tab); });
+  $('aOlvide').addEventListener('click', () => { $('oCorreo').value = $('inCorreo').value; $('oPaso2').hidden = true; mostrarAuth('olv'); });
+  $('aVolver').addEventListener('click', () => mostrarAuth('in'));
+
+  $('userBtn').addEventListener('click', () => { if (sesion) abrirCuenta(); else abrirAuth('in'); });
+
+  $('fIn').addEventListener('submit', async (e) => {
+    e.preventDefault(); mostrarMsg('authErr');
+    const correo = $('inCorreo').value.trim().toLowerCase(), clave = $('inClave').value;
+    if (!correoValido(correo)){ mostrarMsg('authErr', 'Escribe un correo válido.'); return; }
+    if (!clave){ mostrarMsg('authErr', 'Escribe tu clave.'); return; }
+    const btn = e.submitter || $('fIn').querySelector('[type=submit]'); ocupado(btn, true, 'Ingresando…');
+    try {
+      const r = await api({ accion: 'ingreso', correo, clave });
+      if (!r.ok){ mostrarMsg('authErr', r.error); return; }
+      guardarSesion(r.token, r.perfil); $('inClave').value = '';
+      cerrar('authSheet'); toast('¡Hola, ' + r.perfil.nombre.split(' ')[0] + '!');
+    } catch (err) { mostrarMsg('authErr', err.message); }
+    finally { ocupado(btn, false); }
+  });
+
+  $('fReg').addEventListener('submit', async (e) => {
+    e.preventDefault(); mostrarMsg('authErr');
+    const d = { accion: 'registro', correo: $('rCorreo').value.trim().toLowerCase(), clave: $('rClave').value,
+      nombre: $('rNombre').value.trim(), tel: $('rTel').value.trim(), ruc: $('rRuc').value.trim(), dir: $('rDir').value.trim() };
+    if (!correoValido(d.correo)){ mostrarMsg('authErr', 'Escribe un correo válido.'); $('rCorreo').focus(); return; }
+    if (d.clave.length < 6){ mostrarMsg('authErr', 'La clave debe tener al menos 6 caracteres.'); $('rClave').focus(); return; }
+    if (d.clave !== $('rClave2').value){ mostrarMsg('authErr', 'Las claves no coinciden.'); $('rClave2').focus(); return; }
+    if (!d.nombre){ mostrarMsg('authErr', 'Escribe tu nombre.'); $('rNombre').focus(); return; }
+    if (d.tel.replace(/\D/g, '').length < 7){ mostrarMsg('authErr', 'Escribe un teléfono válido.'); $('rTel').focus(); return; }
+    const btn = $('fReg').querySelector('[type=submit]'); ocupado(btn, true, 'Creando tu cuenta…');
+    try {
+      const r = await api(d);
+      if (!r.ok){ mostrarMsg('authErr', r.error); return; }
+      guardarSesion(r.token, r.perfil);
+      ['rClave', 'rClave2'].forEach((id) => { $(id).value = ''; });
+      cerrar('authSheet'); toast('¡Cuenta creada! Bienvenido, ' + r.perfil.nombre.split(' ')[0]);
+    } catch (err) { mostrarMsg('authErr', err.message); }
+    finally { ocupado(btn, false); }
+  });
+
+  $('fOlv').addEventListener('submit', async (e) => {
+    e.preventDefault(); mostrarMsg('authErr'); mostrarMsg('authOk');
+    const correo = $('oCorreo').value.trim().toLowerCase();
+    if (!correoValido(correo)){ mostrarMsg('authErr', 'Escribe un correo válido.'); return; }
+    const btn = $('oEnviar'); ocupado(btn, true, 'Enviando…');
+    try {
+      const r = await api({ accion: 'olvide', correo });
+      if (!r.ok){ mostrarMsg('authErr', r.error); return; }
+      mostrarMsg('authOk', r.mensaje + ' Revisa también la carpeta de spam.');
+      $('oPaso2').hidden = false; $('oCodigo').focus();
+    } catch (err) { mostrarMsg('authErr', err.message); }
+    finally { ocupado(btn, false); }
+  });
+  $('oCambiar').addEventListener('click', async () => {
+    mostrarMsg('authErr');
+    const correo = $('oCorreo').value.trim().toLowerCase(), codigo = $('oCodigo').value.trim(), clave = $('oClave').value;
+    if (codigo.length < 6){ mostrarMsg('authErr', 'Escribe el código de 6 números.'); return; }
+    if (clave.length < 6){ mostrarMsg('authErr', 'La clave nueva debe tener al menos 6 caracteres.'); return; }
+    const btn = $('oCambiar'); ocupado(btn, true, 'Cambiando…');
+    try {
+      const r = await api({ accion: 'restablecer', correo, codigo, clave });
+      if (!r.ok){ mostrarMsg('authErr', r.error); return; }
+      guardarSesion(r.token, r.perfil); $('oClave').value = ''; $('oCodigo').value = '';
+      cerrar('authSheet'); toast('Clave cambiada. Ya ingresaste.');
+    } catch (err) { mostrarMsg('authErr', err.message); }
+    finally { ocupado(btn, false); }
+  });
+
+  // mi cuenta
+  function abrirCuenta(){
+    const p = sesion.perfil;
+    $('cuCorreo').textContent = 'Correo: ' + p.correo;
+    $('cuNombre').value = p.nombre; $('cuTel').value = p.tel; $('cuRuc').value = p.ruc; $('cuDir').value = p.dir;
+    mostrarCuenta('datos'); abrir('cuentaSheet');
+    api({ accion: 'perfil', token: sesion.token }).then((r) => {
+      if (r.ok && sesion){ sesion.perfil = r.perfil; ls.set('mass_sesion', sesion); pintarUsuario(); }
+      else if (!r.ok) mostrarMsg('cuentaErr', r.error);
+    }).catch(() => {});
+  }
+  function mostrarCuenta(tab){
+    mostrarMsg('cuentaErr');
+    $('cuentaTabs').querySelectorAll('button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
+    $('fDatos').hidden = tab !== 'datos'; $('cuPeds').hidden = tab !== 'peds';
+    if (tab === 'peds') cargarMisPedidos();
+  }
+  $('cuentaTabs').addEventListener('click', (e) => { const b = e.target.closest('button[data-tab]'); if (b) mostrarCuenta(b.dataset.tab); });
+  $('cuSalir').addEventListener('click', () => cerrarSesion());
+  $('fDatos').addEventListener('submit', async (e) => {
+    e.preventDefault(); mostrarMsg('cuentaErr');
+    const d = { accion: 'actualizar', token: sesion.token, nombre: $('cuNombre').value.trim(), tel: $('cuTel').value.trim(),
+      ruc: $('cuRuc').value.trim(), dir: $('cuDir').value.trim() };
+    if (!d.nombre){ mostrarMsg('cuentaErr', 'Escribe tu nombre.'); return; }
+    if (d.tel.replace(/\D/g, '').length < 7){ mostrarMsg('cuentaErr', 'Escribe un teléfono válido.'); return; }
+    const btn = $('fDatos').querySelector('[type=submit]'); ocupado(btn, true, 'Guardando…');
+    try {
+      const r = await api(d);
+      if (!r.ok){ mostrarMsg('cuentaErr', r.error); return; }
+      guardarSesion(sesion.token, r.perfil); toast('Datos guardados');
+    } catch (err) { mostrarMsg('cuentaErr', err.message); }
+    finally { ocupado(btn, false); }
+  });
+  async function cargarMisPedidos(){
+    const box = $('cuPeds'); box.replaceChildren(el('span', 'hint', 'Cargando tus pedidos…'));
+    try {
+      const r = await api({ accion: 'mispedidos', token: sesion.token });
+      if (!r.ok){ box.replaceChildren(el('div', 'err', r.error || 'No se pudieron cargar.')); return; }
+      if (!r.pedidos.length){ box.replaceChildren(el('div', 'empty', 'Todavía no tienes pedidos enviados desde tu cuenta.')); return; }
+      box.replaceChildren(...r.pedidos.map((p) => {
+        const d = el('div', 'ped');
+        const t = el('div', 'top'); t.append(el('span', null, p.fecha), el('span', null, '$' + Number(String(p.total).replace(/[^\d.]/g, '') || 0).toFixed(2)));
+        d.append(t, el('span', 'hint', 'Entrega: ' + p.entrega), el('pre', null, p.productos));
+        return d;
+      }));
+    } catch (err) { box.replaceChildren(el('div', 'err', err.message)); }
+  }
+
+  // clientes (solo administrador)
+  let clientes = [];
+  $('clientesBtn').addEventListener('click', () => {
+    mostrarMsg('cliErr'); $('cliCuerpo').hidden = true;
+    abrir('cliSheet');
+    if (pinAdmin) cargarClientes();
+    else { $('cliClaveForm').hidden = false; $('cliClave').value = ''; setTimeout(() => $('cliClave').focus(), 40); }
+  });
+  $('cliClaveForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const v = $('cliClave').value.trim();
+    if (ls.get('mass_pin', null) !== await sha(v)){ mostrarMsg('cliErr', 'Clave incorrecta.'); return; }
+    pinAdmin = v; cargarClientes();
+  });
+  async function cargarClientes(){
+    mostrarMsg('cliErr'); $('cliClaveForm').hidden = true; $('cliCuerpo').hidden = false;
+    $('cliN').textContent = 'Cargando clientes…'; $('cliLista').replaceChildren();
+    try {
+      const r = await api({ accion: 'admin_clientes', admin: pinAdmin });
+      if (!r.ok){
+        $('cliCuerpo').hidden = true;
+        mostrarMsg('cliErr', r.clave ? 'El servidor no aceptó tu clave. Revisa que CLAVE_ADMIN en el script de Google sea igual a tu clave de administrador.' : r.error);
+        return;
+      }
+      clientes = r.clientes; pintarClientes();
+    } catch (err) { $('cliCuerpo').hidden = true; mostrarMsg('cliErr', err.message); }
+  }
+  function pintarClientes(){
+    const w = norm($('cliQ').value.trim()).split(/\s+/).filter(Boolean);
+    const l = clientes.filter((c) => { const h = norm([c.nombre, c.correo, c.tel, c.ruc].join(' ')); return w.every((x) => h.indexOf(x) >= 0); });
+    $('cliN').textContent = clientes.length + (clientes.length === 1 ? ' cliente registrado' : ' clientes registrados') + (w.length ? ' · ' + l.length + ' en la búsqueda' : '');
+    $('cliLista').replaceChildren(...l.map((c) => {
+      const d = el('div', 'cli');
+      d.appendChild(el('div', 'nm', c.nombre));
+      const del = el('button', 'btn danger', 'Eliminar'); del.type = 'button';
+      del.addEventListener('click', () => eliminarCliente(c, del));
+      d.appendChild(del);
+      d.appendChild(el('div', 'dt', c.correo + ' · ' + c.tel + (c.ruc ? ' · ' + c.ruc : '')));
+      d.appendChild(el('div', 'dt', 'Desde ' + (c.alta || '—').slice(0, 10) + ' · ' + c.pedidos + (c.pedidos === 1 ? ' pedido' : ' pedidos') + (c.dir ? ' · ' + c.dir : '')));
+      return d;
+    }));
+    if (!l.length) $('cliLista').appendChild(el('div', 'empty', clientes.length ? 'Ningún cliente coincide.' : 'Aún no hay clientes registrados.'));
+  }
+  $('cliQ').addEventListener('input', pintarClientes);
+  async function eliminarCliente(c, btn){
+    if (!confirm('¿Eliminar a ' + c.nombre + ' (' + c.correo + ')?\n\nYa no podrá ingresar con esa cuenta. Sus pedidos anteriores se quedan en la hoja PEDIDOS.')) return;
+    ocupado(btn, true, 'Eliminando…');
+    try {
+      const r = await api({ accion: 'admin_eliminar', admin: pinAdmin, correo: c.correo });
+      if (!r.ok){ toast(r.error); ocupado(btn, false); return; }
+      clientes = clientes.filter((x) => x.correo !== c.correo); pintarClientes(); toast('Cliente eliminado');
+    } catch (err) { toast(err.message); ocupado(btn, false); }
+  }
+
+  pintarUsuario();
+  if (sesion && API) api({ accion: 'perfil', token: sesion.token }).then((r) => {
+    if (r.ok && sesion){ sesion.perfil = r.perfil; ls.set('mass_sesion', sesion); pintarUsuario(); pintarQuien(); }
+  }).catch(() => {});
 
   // ---------- instalación ----------
   let evInstall = null;
