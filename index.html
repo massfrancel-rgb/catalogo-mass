@@ -285,6 +285,16 @@ ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
         </div>
       </div>
     </div>
+    <div id="cartDone" class="form" hidden>
+      <div class="okmsg" id="doneMsg"></div>
+      <p class="hint" style="margin:0">Te responderemos por WhatsApp para confirmar precios, disponibilidad y la forma de pago.</p>
+      <button type="button" class="btn primary" id="donePdf">Descargar nota de pedido (PDF)</button>
+      <button type="button" class="btn wa" id="doneWa">Abrir WhatsApp otra vez</button>
+      <div class="btns">
+        <button type="button" class="btn quiet" id="doneBack">Volver al pedido</button>
+        <button type="button" class="btn dark grow" id="doneNew">Empezar pedido nuevo</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -704,31 +714,180 @@ ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
     const dir = $('cDir').value.trim();
     if (envio && !dir){ $('cDir').focus(); toast('Escribe la dirección de entrega'); return; }
     if (!pf) ls.set('mass_cliente', { n: nombre, d: dir });
-    let total = 0;
-    const lineas = codes.map((c) => {
-      const p = byCode[c], q = cart[c]; total += p.pvp * q;
-      return '• ' + q + ' x ' + p.nombre + ' (cód. ' + p.code + ')' + (p.pvp > 0 ? ' — ' + money(p.pvp * q) : ' — consultar precio');
+    const d = new Date(), z = (n) => String(n).padStart(2, '0');
+    const items = codes.map((c) => ({ c, n: byCode[c].nombre, q: cart[c], p: byCode[c].pvp }));
+    ultimoPedido = {
+      num: String(d.getFullYear()).slice(2) + z(d.getMonth() + 1) + z(d.getDate()) + '-' + z(d.getHours()) + z(d.getMinutes()) + z(d.getSeconds()),
+      fecha: z(d.getDate()) + '/' + z(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + z(d.getHours()) + ':' + z(d.getMinutes()),
+      nombre, tel: pf ? pf.tel : '', ruc: pf ? pf.ruc : '', correo: pf ? pf.correo : '',
+      entrega: envio ? 'Envío a domicilio' : 'Retiro en el local', dir: envio ? dir : '',
+      nota: $('cNota').value.trim(), items,
+      total: Math.round(items.reduce((s, x) => s + x.p * x.q, 0) * 100) / 100
+    };
+    abrirWhatsApp();
+    if (pf){
+      const up = ultimoPedido;
+      api({ accion: 'pedido', token: sesion.token, entrega: up.entrega + (up.dir ? ': ' + up.dir : ''),
+        nota: 'Pedido N° ' + up.num + (up.nota ? ' · ' + up.nota : ''), total: up.total, items }, true).catch(() => {});
+    }
+    $('doneMsg').textContent = 'Pedido N° ' + ultimoPedido.num + ' enviado a WhatsApp.';
+    $('cartForm').hidden = true; $('cartList').hidden = true; $('cartDone').hidden = false;
+  });
+
+  // ---------- nota de pedido ----------
+  let ultimoPedido = null;
+  const ANCHO = 30;   // caracteres por línea: cabe en la pantalla de un celular en WhatsApp
+  const linea = (ch) => ch.repeat(ANCHO);
+  const centro = (t) => { t = String(t).slice(0, ANCHO); const e = Math.floor((ANCHO - t.length) / 2); return ' '.repeat(e) + t; };
+  const lados = (a, b) => { a = String(a); b = String(b); return a + ' '.repeat(Math.max(1, ANCHO - a.length - b.length)) + b; };
+  function partir(texto, ancho){
+    const out = []; let cur = '';
+    String(texto).split(/\s+/).forEach((w) => {
+      while (w.length > ancho){ if (cur){ out.push(cur); cur = ''; } out.push(w.slice(0, ancho)); w = w.slice(ancho); }
+      if (!cur) cur = w; else if ((cur + ' ' + w).length <= ancho) cur += ' ' + w; else { out.push(cur); cur = w; }
     });
-    const entrega = envio ? 'envío a ' + dir : 'retiro en el local';
-    const msg = ['*Pedido desde el catálogo MASS*', '', 'Cliente: ' + nombre];
-    if (pf){
-      if (pf.tel) msg.push('Teléfono: ' + pf.tel);
-      if (pf.ruc) msg.push('Cédula/RUC: ' + pf.ruc);
-      msg.push('Correo: ' + pf.correo + ' (cliente registrado)');
-    }
-    msg.push('Entrega: ' + entrega, '', ...lineas, '', '*Total referencial: ' + money(total) + '*');
-    const nota = $('cNota').value.trim(); if (nota) msg.push('', 'Nota: ' + nota);
-    window.open('https://wa.me/' + WA + '?text=' + encodeURIComponent(msg.join('\n')), '_blank', 'noopener');
-    if (pf){
-      api({ accion: 'pedido', token: sesion.token, entrega, nota, total,
-        items: codes.map((c) => ({ c, n: byCode[c].nombre, q: cart[c], p: byCode[c].pvp })) }, true).catch(() => {});
-    }
+    if (cur) out.push(cur); return out;
+  }
+  const dato = (et, v) => partir(v, ANCHO - 9).map((l, i) => (i ? ' '.repeat(9) : (et + ':').padEnd(9)) + l);  // etiquetas de 7 letras máx.
+
+  function textoNota(o){
+    const L = [];
+    L.push(centro('MASS FERRETERÍA'), centro('Av. León Rodrigo Pesantes'), centro('y Kuwait · Santo Domingo'), centro('WhatsApp 0959920159'));
+    L.push(linea('='), centro('NOTA DE PEDIDO'), centro('N° ' + o.num), lados('Fecha:', o.fecha), linea('-'));
+    L.push(...dato('Cliente', o.nombre));
+    if (o.ruc) L.push(...dato('CI/RUC', o.ruc));
+    if (o.tel) L.push(...dato('Teléf.', o.tel));
+    if (o.correo) L.push(...dato('Correo', o.correo));
+    L.push(...dato('Entrega', o.entrega));
+    if (o.dir) L.push(...dato('Direc.', o.dir));
+    L.push(linea('-'), 'CANT DESCRIPCIÓN', lados('     P. UNIT.', 'SUBTOTAL'), linea('-'));
+    o.items.forEach((x) => {
+      const nl = partir(x.n, ANCHO - 5);
+      L.push(String(x.q).padEnd(5) + nl[0]);
+      nl.slice(1).forEach((l) => L.push('     ' + l));
+      L.push('     Cód. ' + x.c);
+      L.push(x.p > 0 ? lados('     ' + money(x.p), money(x.p * x.q)) : lados('', 'Por consultar'));
+    });
+    const unidades = o.items.reduce((s, x) => s + x.q, 0);
+    L.push(linea('-'), lados('Artículos: ' + o.items.length, 'Unidades: ' + unidades), linea('='), lados('TOTAL:', money(o.total)), linea('='));
+    if (o.nota) L.push(...partir('Nota: ' + o.nota, ANCHO));
+    L.push(...partir('Valores referenciales, sujetos a confirmación de stock y precio.', ANCHO));
+    return L.join('\n');
+  }
+  function abrirWhatsApp(){
+    const msg = '*NOTA DE PEDIDO N° ' + ultimoPedido.num + '*\n```\n' + textoNota(ultimoPedido) + '\n```';
+    window.open('https://wa.me/' + WA + '?text=' + encodeURIComponent(msg), '_blank', 'noopener');
+  }
+
+  function cargarScript(src){
+    return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+  }
+  function imagenDataUrl(src){
+    return new Promise((res) => {
+      const i = new Image(); i.onload = () => { const c = document.createElement('canvas'); c.width = i.width; c.height = i.height;
+        c.getContext('2d').drawImage(i, 0, 0); try { res(c.toDataURL('image/png')); } catch (e) { res(null); } };
+      i.onerror = () => res(null); i.src = src;
+    });
+  }
+  async function notaPDF(o){
+    if (!window.jspdf) await cargarScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    const doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' });
+    const W = 210, M = 15, oro = [201, 154, 46], osc = [26, 24, 20], gris = [94, 88, 76];
+    let y = 15;
+    const logo = await imagenDataUrl('logo_mass.png');
+    if (logo) doc.addImage(logo, 'PNG', M, y, 22, 25.3);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.setTextColor(...osc);
+    doc.text('MASS FERRETERÍA', M + 27, y + 8);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(...gris);
+    doc.text('Av. León Rodrigo Pesantes y Kuwait, esquina', M + 27, y + 14);
+    doc.text('Santo Domingo de los Tsáchilas · Ecuador', M + 27, y + 18.5);
+    doc.text('WhatsApp 0959920159', M + 27, y + 23);
+    // recuadro del número
+    doc.setDrawColor(...oro); doc.setLineWidth(0.6); doc.roundedRect(W - M - 58, y, 58, 25, 2, 2);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(...osc);
+    doc.text('NOTA DE PEDIDO', W - M - 29, y + 7.5, { align: 'center' });
+    doc.setFontSize(13); doc.setTextColor(...oro); doc.text('N° ' + o.num, W - M - 29, y + 15, { align: 'center' });
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...gris); doc.text(o.fecha, W - M - 29, y + 21, { align: 'center' });
+    y += 33;
+    // datos del cliente
+    const filas = [['Cliente', o.nombre], ['Cédula / RUC', o.ruc], ['Teléfono', o.tel], ['Correo', o.correo],
+      ['Entrega', o.entrega + (o.dir ? ': ' + o.dir : '')]].filter((f) => f[1]);
+    doc.setFillColor(243, 233, 207);
+    const altoCli = 6 + filas.length * 5.5;
+    doc.roundedRect(M, y, W - 2 * M, altoCli, 2, 2, 'F');
+    let yy = y + 6.5;
+    filas.forEach(([k, v]) => {
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(...osc); doc.text(k + ':', M + 4, yy);
+      doc.setFont('helvetica', 'normal'); doc.text(doc.splitTextToSize(String(v), W - 2 * M - 40)[0], M + 34, yy);
+      yy += 5.5;
+    });
+    y += altoCli + 7;
+    // tabla
+    const col = { cant: M, cod: M + 14, desc: M + 34, pu: W - M - 32, sub: W - M };
+    const cabecera = () => {
+      doc.setFillColor(...osc); doc.rect(M, y, W - 2 * M, 8, 'F');
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(243, 233, 207);
+      doc.text('CANT.', col.cant + 2, y + 5.4); doc.text('CÓDIGO', col.cod + 1, y + 5.4); doc.text('DESCRIPCIÓN', col.desc, y + 5.4);
+      doc.text('P. UNIT.', col.pu, y + 5.4, { align: 'right' }); doc.text('SUBTOTAL', col.sub - 2, y + 5.4, { align: 'right' });
+      y += 8;
+    };
+    cabecera();
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5);
+    o.items.forEach((x, i) => {
+      const desc = doc.splitTextToSize(x.n, col.pu - col.desc - 18);
+      const h = Math.max(7, desc.length * 4.4 + 2.6);
+      if (y + h > 262){ doc.addPage(); y = 15; cabecera(); doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); }
+      if (i % 2) { doc.setFillColor(251, 250, 246); doc.rect(M, y, W - 2 * M, h, 'F'); }
+      doc.setTextColor(...osc);
+      doc.text(String(x.q), col.cant + 6, y + 4.8, { align: 'center' });
+      doc.setTextColor(...gris); doc.text(String(x.c), col.cod + 1, y + 4.8);
+      doc.setTextColor(...osc); doc.text(desc, col.desc, y + 4.8);
+      doc.text(x.p > 0 ? money(x.p) : 'Consultar', col.pu, y + 4.8, { align: 'right' });
+      doc.text(x.p > 0 ? money(x.p * x.q) : '-', col.sub - 2, y + 4.8, { align: 'right' });
+      y += h;
+      doc.setDrawColor(231, 226, 214); doc.setLineWidth(0.2); doc.line(M, y, W - M, y);
+    });
+    y += 6;
+    if (y > 250){ doc.addPage(); y = 20; }
+    const unidades = o.items.reduce((s, x) => s + x.q, 0);
+    doc.setFontSize(9.5); doc.setTextColor(...gris);
+    doc.text('Artículos: ' + o.items.length + '   ·   Unidades: ' + unidades, M, y + 4);
+    doc.setFillColor(...oro); doc.roundedRect(W - M - 70, y - 2, 70, 12, 2, 2, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(...osc);
+    doc.text('TOTAL', W - M - 66, y + 6); doc.text(money(o.total), W - M - 4, y + 6, { align: 'right' });
+    y += 18;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...gris);
+    if (o.nota){ doc.text(doc.splitTextToSize('Nota: ' + o.nota, W - 2 * M), M, y); y += 9; }
+    doc.text(doc.splitTextToSize('Documento sin valor tributario. Valores referenciales, sujetos a confirmación de stock y precio por parte de MASS FERRETERÍA.', W - 2 * M), M, y);
+    return doc;
+  }
+  $('donePdf').addEventListener('click', async () => {
+    if (!ultimoPedido) return;
+    const b = $('donePdf'); ocupado(b, true, 'Preparando PDF…');
+    try {
+      const doc = await notaPDF(ultimoPedido);
+      const nombre = 'Nota_de_pedido_MASS_' + ultimoPedido.num + '.pdf';
+      const blob = doc.output('blob');
+      const file = new File([blob], nombre, { type: 'application/pdf' });
+      if (navigator.canShare && navigator.canShare({ files: [file] }) && /Android|iPhone|iPad/i.test(navigator.userAgent)){
+        try { await navigator.share({ files: [file], title: 'Nota de pedido ' + ultimoPedido.num }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+      }
+      descargar(blob, nombre);
+    } catch (e) { toast('No se pudo crear el PDF. Revisa tu conexión.'); }
+    finally { ocupado(b, false); }
+  });
+  $('doneWa').addEventListener('click', () => { if (ultimoPedido) abrirWhatsApp(); });
+  $('doneBack').addEventListener('click', () => { $('cartDone').hidden = true; $('cartList').hidden = false; pintarCarrito(); });
+  $('doneNew').addEventListener('click', () => {
+    cart = {}; ls.set('mass_cart', cart); $('cNota').value = '';
+    $('cartDone').hidden = true; $('cartList').hidden = false; pintarCarrito(); render(); cerrar('cartSheet');
+    toast('Listo para un pedido nuevo');
   });
   $('cartClear').addEventListener('click', () => {
     if (!confirm('¿Vaciar todo el pedido?')) return;
     cart = {}; ls.set('mass_cart', cart); pintarCarrito(); render();
   });
-  $('cartBtn').addEventListener('click', () => { pintarCarrito(); abrir('cartSheet'); });
+  $('cartBtn').addEventListener('click', () => { $('cartDone').hidden = true; $('cartList').hidden = false; pintarCarrito(); abrir('cartSheet'); });
 
   // ---------- hojas ----------
   let ultimoFoco = null;
