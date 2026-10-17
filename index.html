@@ -6,6 +6,15 @@
 <title>Catálogo MASS</title>
 <meta name="description" content="Catálogo de productos de MASS FERRETERÍA, Santo Domingo de los Tsáchilas. Pide por WhatsApp.">
 <meta name="theme-color" content="#1A1814">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MASS FERRETERÍA">
+<meta property="og:title" content="Catálogo MASS FERRETERÍA">
+<meta property="og:description" content="Más de 4.300 artículos de ferretería con precios. Arma tu pedido y envíalo por WhatsApp. Santo Domingo de los Tsáchilas.">
+<meta property="og:url" content="https://catalogo-mass.vercel.app/">
+<meta property="og:image" content="https://catalogo-mass.vercel.app/compartir.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="catalogo-192.png">
 <link rel="apple-touch-icon" href="catalogo-180.png">
@@ -178,6 +187,14 @@ ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
 .phead .vaciar + .x{margin-left:0}
 .ci .quitar{width:44px;height:44px;flex:0 0 auto;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--warn-fg);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
 .panel.ancho{max-width:780px}
+.sharebtn{padding:0 12px}
+@media (max-width:420px){.brand{gap:6px}.sharebtn,.userbtn{min-width:42px;width:42px;height:44px;padding:0}.cartbtn{height:44px;padding:0 8px;gap:4px}.brand h1{font-size:15px!important}.brand img{height:38px!important}}
+.share-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.qrbox{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.qrbox #shQr{width:200px;height:200px}
+.qrbox #shQr img,.qrbox #shQr canvas{width:200px!important;height:200px!important}
+.qrbox .hint{color:#5E584C}
+#shUrl{font-size:14px;color:var(--muted)}
 .info-cards{display:grid;grid-template-columns:1fr;gap:10px}
 @media (min-width:520px){.info-cards{grid-template-columns:1fr 1fr}.info-cards .icard:first-child{grid-column:1/-1}}
 .icard{display:flex;gap:12px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--fg);text-decoration:none;font-size:13.5px;line-height:1.35}
@@ -232,6 +249,7 @@ a.icard svg{stroke:var(--wa)}
     <div class="brand">
       <img src="logo_mass.png" alt="Logo MASS FERRETERÍA" width="40" height="46">
       <div class="grow"><h1>MASS FERRETERÍA</h1><small>Catálogo de productos</small></div>
+      <button type="button" class="userbtn sharebtn" id="shareBtn" aria-label="Compartir el catálogo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg><span class="lbl">Compartir</span></button>
       <button type="button" class="userbtn" id="userBtn" aria-label="Mi cuenta" hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
         <span class="lbl" id="userLbl">Ingresar</span>
@@ -292,7 +310,8 @@ a.icard svg{stroke:var(--wa)}
     <div><a href="https://wa.me/593959920159" target="_blank" rel="noopener">WhatsApp 0959920159</a><br>
       <a href="https://www.google.com/maps/search/?api=1&query=Av.+Le%C3%B3n+Rodrigo+Pesantes+y+Kuwait+Santo+Domingo+Ecuador" target="_blank" rel="noopener">Cómo llegar</a></div>
     <div class="hint" style="color:#A39A87" id="fechaCat"></div>
-    <button type="button" class="admin" id="adminBtn">Administrador</button>
+    <button type="button" class="admin" id="shareFoot" style="color:#F3E9CF;border-color:#C99A2E">Compartir el catálogo</button>
+    <button type="button" class="admin" id="adminBtn" style="margin-left:0">Administrador</button>
   </div>
 </footer>
 
@@ -304,6 +323,7 @@ a.icard svg{stroke:var(--wa)}
     <h2 id="detNombre"></h2>
     <div class="phead"><span class="precio" id="detPrecio" style="padding:0"></span><span id="detPill"></span></div>
     <div class="btns" id="detAct"></div>
+    <button type="button" class="btn quiet" id="detShare"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg> Compartir este producto</button>
     <div class="info-cards">
       <a class="icard" id="detConsulta" target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19z"/><path d="M9.5 9.5c.3 2 2 4 4 4.5l1.2-1.2 2 .8-.4 1.6c-3.6.4-7.6-3.6-7.2-7.2l1.6-.4.8 2z"/></svg>
@@ -529,6 +549,22 @@ a.icard svg{stroke:var(--wa)}
   </div>
 </div>
 
+<!-- compartir -->
+<div class="sheet" id="shareSheet" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="shareTitle">
+    <div class="phead"><h2 id="shareTitle">Compartir</h2><button type="button" class="x" data-close aria-label="Cerrar">✕</button></div>
+    <p class="hint" id="shareTxt" style="margin:0"></p>
+    <div class="share-grid">
+      <a class="btn wa" id="shWa" target="_blank" rel="noopener">WhatsApp</a>
+      <a class="btn" id="shFb" target="_blank" rel="noopener" style="border-color:#1877F2;color:#1877F2">Facebook</a>
+      <button type="button" class="btn" id="shCopy">Copiar enlace</button>
+      <button type="button" class="btn" id="shMas" hidden>Más opciones</button>
+    </div>
+    <div class="qrbox"><div id="shQr"></div><span class="hint">Escanea con la cámara del celular</span></div>
+    <input id="shUrl" readonly aria-label="Enlace para compartir">
+  </div>
+</div>
+
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script>
@@ -725,7 +761,9 @@ a.icard svg{stroke:var(--wa)}
   }
 
   // ---------- detalle ----------
+  let detActual = null;
   function abrirDetalle(p){
+    detActual = p;
     $('detMarca').textContent = p.marca || 'MASS';
     $('detCod').textContent = ' · Cód. ' + p.code;
     const box = $('detImg'); box.replaceChildren();
@@ -1504,6 +1542,52 @@ a.icard svg{stroke:var(--wa)}
     if (r.ok && sesion){ sesion.perfil = r.perfil; ls.set('mass_sesion', sesion); pintarUsuario(); pintarQuien(); }
   }).catch(() => {});
 
+  // ---------- compartir ----------
+  const URL_APP = location.origin + location.pathname.replace(/index\.html$/, '');
+  const esMovil = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  let compartirDatos = null;
+  async function compartir(titulo, texto, url){
+    compartirDatos = { title: titulo, text: texto, url };
+    if (navigator.share && esMovil()){
+      try { await navigator.share(compartirDatos); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    $('shareTitle').textContent = titulo;
+    $('shareTxt').textContent = texto;
+    $('shUrl').value = url;
+    $('shWa').href = 'https://wa.me/?text=' + encodeURIComponent(texto + '\n' + url);
+    $('shFb').href = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(url);
+    $('shMas').hidden = !navigator.share;
+    const qr = $('shQr'); qr.replaceChildren();
+    abrir('shareSheet');
+    try {
+      if (!window.QRCode) await cargarScript('https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js');
+      new QRCode(qr, { text: url, width: 400, height: 400, colorDark: '#1A1814', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+    } catch (e) { qr.textContent = ''; }
+  }
+  function compartirCatalogo(){
+    compartir('Catálogo MASS FERRETERÍA', 'Mira el catálogo de MASS FERRETERÍA: más de 4.300 artículos con precios. Puedes armar tu pedido y enviarlo por WhatsApp.', URL_APP);
+  }
+  $('shareBtn').addEventListener('click', compartirCatalogo);
+  $('shareFoot').addEventListener('click', compartirCatalogo);
+  $('detShare').addEventListener('click', () => {
+    const p = detActual; if (!p) return;
+    compartir('Compartir producto', p.nombre + (p.pvp > 0 ? ' — ' + money(p.pvp) : '') + ' en MASS FERRETERÍA', URL_APP + '#p=' + encodeURIComponent(p.code));
+  });
+  $('shCopy').addEventListener('click', async () => {
+    const u = $('shUrl').value;
+    try { await navigator.clipboard.writeText(u); toast('Enlace copiado'); }
+    catch (e) { $('shUrl').select(); try { document.execCommand('copy'); toast('Enlace copiado'); } catch (e2) { toast('Mantén presionado el enlace para copiarlo'); } }
+  });
+  $('shMas').addEventListener('click', () => { if (compartirDatos && navigator.share) navigator.share(compartirDatos).catch(() => {}); });
+  function revisarEnlaceProducto(){
+    const m = location.hash.match(/^#p=([^&]+)/);
+    if (!m) return;
+    const p = byCode[decodeURIComponent(m[1])];
+    history.replaceState(null, '', location.pathname + location.search);
+    if (p) abrirDetalle(p); else toast('Ese producto ya no está en el catálogo.');
+  }
+  window.addEventListener('hashchange', revisarEnlaceProducto);
+
   // ---------- instalación ----------
   let evInstall = null;
   window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); evInstall = e; if (!ls.get('mass_noinst', false)) $('installBar').hidden = false; });
@@ -1517,7 +1601,7 @@ a.icard svg{stroke:var(--wa)}
   fetch('catalogo.json', { cache: 'no-cache' }).then((r) => { if (!r.ok) throw 0; return r.json(); })
     .then((d) => cargarCatalogo(local || d))
     .catch(() => { if (local) cargarCatalogo(local); else $('nShown').textContent = 'No se pudo cargar el catálogo. Revisa tu conexión.'; })
-    .then(() => { if (sessionStorage.getItem('mass_admin') === '1' && ls.get('mass_pin', null)) entrarAdmin(); revisarEnlaceNota(); });
+    .then(() => { if (sessionStorage.getItem('mass_admin') === '1' && ls.get('mass_pin', null)) entrarAdmin(); revisarEnlaceNota(); revisarEnlaceProducto(); });
 })();
 </script>
 </body>
