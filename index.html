@@ -439,13 +439,14 @@ a.icard svg{stroke:var(--wa)}
     <p style="margin:0">Los cambios están guardados solo en este equipo. Para que todos los vean:</p>
     <ol class="pasos">
       <li>Descarga los archivos con el botón de abajo.</li>
-      <li>En GitHub, abre tu repositorio del catálogo y súbelos con <b>Add file → Upload files → Commit</b>.</li>
-      <li>Las fotos van dentro de la carpeta <b>fotos</b>.</li>
+      <li>Descomprime fotos-nuevas.zip y sube las fotos <b>dentro de la carpeta fotos</b>: <a href="https://github.com/massfrancel-rgb/catalogo-mass/upload/main/fotos" target="_blank" rel="noopener">abrir subida a «fotos»</a>.</li>
+      <li>El catalogo.json va en la página principal: <a href="https://github.com/massfrancel-rgb/catalogo-mass/upload/main" target="_blank" rel="noopener">abrir subida principal</a>.</li>
+      <li>Espera 2 minutos y toca «Ya los subí: verificar». La app revisa en internet que todo esté publicado antes de borrar nada de este equipo.</li>
     </ol>
     <span class="hint" id="pubResumen"></span>
     <div class="btns">
       <button type="button" class="btn primary grow" id="pubDl">Descargar archivos</button>
-      <button type="button" class="btn quiet" id="pubDone">Ya los subí a GitHub</button>
+      <button type="button" class="btn quiet" id="pubDone">Ya los subí: verificar</button>
     </div>
   </div>
 </div>
@@ -1289,6 +1290,7 @@ a.icard svg{stroke:var(--wa)}
   // ---------- publicar ----------
   $('exportBtn').addEventListener('click', () => {
     const nf = Object.keys(fotosLocales).length;
+    $('pubResumen').className = 'hint';
     $('pubResumen').textContent = 'Se descargará catalogo.json' + (nf ? ' y fotos-nuevas.zip (' + nf + ' fotos: descomprímelo y sube las fotos a la carpeta fotos)' : '') + '.';
     abrir('pubSheet');
   });
@@ -1308,13 +1310,43 @@ a.icard svg{stroke:var(--wa)}
       setTimeout(async () => descargar(await zip.generateAsync({ type: 'blob' }), 'fotos-nuevas.zip'), 800);
     } catch (e) { toast('No se pudo preparar el ZIP de fotos.'); }
   });
+  // Verifica en internet que lo publicado esté realmente en el sitio antes de borrar lo guardado en este equipo.
   $('pubDone').addEventListener('click', async () => {
-    if (!confirm('¿Ya subiste catalogo.json y las fotos a GitHub? Se limpiarán los cambios pendientes de este equipo.')) return;
-    conFoto = new Set(catalogoActual().f);
-    try { await idb.clear(); } catch (e) {}
-    Object.values(fotosLocales).forEach((u) => URL.revokeObjectURL(u)); fotosLocales = {};
-    ls.del('mass_cat_local'); pintarPendientes(); cerrar('pubSheet'); render();
-    toast('Listo. En unos minutos todos verán los cambios.');
+    const btn = $('pubDone'); ocupado(btn, true, 'Verificando en internet…');
+    $('pubResumen').textContent = '';
+    try {
+      const v = '?verificar=' + Date.now();
+      const local = catalogoActual();
+      const codes = Object.keys(fotosLocales);
+      // 1) fotos
+      const faltan = [];
+      for (const c of codes){
+        try { const r = await fetch('fotos/' + encodeURIComponent(c) + '.jpg' + v, { method: 'HEAD', cache: 'no-store' }); if (!r.ok) faltan.push(c); }
+        catch (e) { faltan.push(c); }
+      }
+      // 2) catálogo
+      let catOk = true;
+      if (ls.get('mass_cat_local', null) || codes.length){
+        try {
+          const srv = await (await fetch('catalogo.json' + v, { cache: 'no-store' })).json();
+          const fs = new Set(srv.f || []);
+          catOk = JSON.stringify(srv.p) === JSON.stringify(local.p) && JSON.stringify(srv.d || {}) === JSON.stringify(local.d || {})
+            && local.f.every((c) => fs.has(c));
+        } catch (e) { catOk = false; }
+      }
+      // limpiar solo lo que ya está publicado
+      const listas = codes.filter((c) => faltan.indexOf(c) < 0);
+      for (const c of listas){ try { await idb.del(c); } catch (e) {} URL.revokeObjectURL(fotosLocales[c]); delete fotosLocales[c]; conFoto.add(c); }
+      if (catOk) ls.del('mass_cat_local');
+      pintarPendientes(); render();
+      if (!faltan.length && catOk){ cerrar('pubSheet'); toast('¡Verificado! Todo está publicado.'); return; }
+      const msg = [];
+      if (faltan.length) msg.push('Estas fotos aún NO están en la carpeta «fotos» de GitHub: ' + faltan.join(', ') + '. Siguen guardadas en este equipo.');
+      if (!catOk) msg.push('El catalogo.json publicado todavía no tiene tus últimos cambios. Súbelo a la página principal del repositorio.');
+      msg.push('Si acabas de subirlos, espera 2 minutos y vuelve a tocar este botón.');
+      $('pubResumen').textContent = msg.join(' ');
+      $('pubResumen').className = 'err';
+    } finally { ocupado(btn, false); }
   });
 
   // ---------- cuentas de clientes ----------
