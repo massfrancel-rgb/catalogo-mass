@@ -188,6 +188,10 @@ ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
 .ci .quitar{width:44px;height:44px;flex:0 0 auto;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--warn-fg);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
 .panel.ancho{max-width:780px}
 .sharebtn{padding:0 12px}
+.admtop{color:#CDBF9C;max-width:none}
+.admmini{display:none;height:44px;width:44px;flex:0 0 auto;border-radius:10px;border:1.5px solid #3A352C;background:#2A261F;color:#CDBF9C;cursor:pointer;align-items:center;justify-content:center}
+.admmini svg{width:20px;height:20px}
+@media (max-width:640px){.admtop{display:none}.admmini{display:inline-flex;order:3}#orden{order:2}.tools select{flex:1 1 110px}}
 @media (max-width:420px){.brand{gap:6px}.sharebtn,.userbtn{min-width:42px;width:42px;height:44px;padding:0}.cartbtn{height:44px;padding:0 8px;gap:4px}.brand h1{font-size:15px!important}.brand img{height:38px!important}}
 .share-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .qrbox{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px;border:1px solid var(--line);border-radius:12px;background:#fff}
@@ -249,6 +253,7 @@ a.icard svg{stroke:var(--wa)}
     <div class="brand">
       <img src="logo_mass.png" alt="Logo MASS FERRETERÍA" width="40" height="46">
       <div class="grow"><h1>MASS FERRETERÍA</h1><small>Catálogo de productos</small></div>
+      <button type="button" class="userbtn admtop" id="adminTop" aria-label="Administrador"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span class="lbl">Administrador</span></button>
       <button type="button" class="userbtn sharebtn" id="shareBtn" aria-label="Compartir el catálogo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg><span class="lbl">Compartir</span></button>
       <button type="button" class="userbtn" id="userBtn" aria-label="Mi cuenta" hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
@@ -262,6 +267,7 @@ a.icard svg{stroke:var(--wa)}
     <div class="tools">
       <input id="q" type="search" placeholder="Buscar: cemento, tubo 1/2, pintura…" aria-label="Buscar productos" autocomplete="off" enterkeyhint="search">
       <select id="cat" aria-label="Categoría"><option value="todas">Todas las categorías</option></select>
+      <button type="button" class="admmini" id="adminMini" aria-label="Administrador"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></button>
       <select id="orden" aria-label="Ordenar">
         <option value="rel">Orden normal</option>
         <option value="pa">Precio: menor a mayor</option>
@@ -1128,6 +1134,7 @@ a.icard svg{stroke:var(--wa)}
     const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('mass:' + s));
     return Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, '0')).join('');
   }
+  ['adminTop', 'adminMini'].forEach((id) => $(id).addEventListener('click', () => $('adminBtn').click()));
   $('adminBtn').addEventListener('click', () => {
     if (admin){ window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
     const tiene = !!ls.get('mass_pin', null);
