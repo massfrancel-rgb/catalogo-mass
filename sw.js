@@ -1,5 +1,5 @@
 // Catálogo MASS — guarda la app para abrir rápido y sin internet.
-const VERSION = 'catalogo-mass-2026-10-16f';
+const VERSION = 'catalogo-mass-2026-10-16g';
 const BASE = ['./', 'index.html', 'manifest.json', 'logo_mass.png', 'catalogo-192.png', 'catalogo-512.png', 'catalogo-180.png', 'catalogo.json'];
 
 self.addEventListener('install', (e) => {

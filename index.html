@@ -174,6 +174,9 @@ ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
 .cli .dt{font-size:14px;color:var(--muted);overflow-wrap:anywhere}
 .cli .btn{grid-row:1/span 3;grid-column:2;min-height:40px;padding:0 12px;font-size:14px}
 .btn.danger{border-color:var(--warn-fg);color:var(--warn-fg)}
+.btn.vaciar{margin-left:auto;min-height:44px;padding:0 12px;font-size:14px;background:var(--warn-bg);border-color:transparent}
+.phead .vaciar + .x{margin-left:0}
+.ci .quitar{width:44px;height:44px;flex:0 0 auto;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--warn-fg);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
 .panel.ancho{max-width:780px}
 .nota{background:#fff;color:#1A1814;border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
 .nota .hint{color:#5E584C}
@@ -291,7 +294,11 @@ ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
 <!-- carrito -->
 <div class="sheet" id="cartSheet" hidden>
   <div class="panel" role="dialog" aria-modal="true" aria-labelledby="cartTitle">
-    <div class="phead"><h2 id="cartTitle">Mi pedido</h2><button type="button" class="x" data-close aria-label="Cerrar">✕</button></div>
+    <div class="phead"><h2 id="cartTitle">Mi pedido</h2>
+      <button type="button" class="btn danger vaciar" id="cartClearTop" hidden>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg>
+        Vaciar carrito</button>
+      <button type="button" class="x" data-close aria-label="Cerrar">✕</button></div>
     <div class="cart-list" id="cartList"></div>
     <div id="cartEmpty" class="empty" hidden>Todavía no agregas productos. Busca lo que necesitas y toca «Agregar».</div>
     <div id="cartForm">
@@ -307,7 +314,6 @@ ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
         <label id="dirWrap" hidden>Dirección de entrega<textarea id="cDir" maxlength="250" placeholder="Calle, número, referencia"></textarea></label>
         <label>Nota (opcional)<input id="cNota" maxlength="200" placeholder="Ej.: necesito factura con RUC"></label>
         <div class="btns">
-          <button type="button" class="btn quiet" id="cartClear">Vaciar</button>
           <button type="button" class="btn wa grow" id="cartSend">Enviar pedido por WhatsApp</button>
         </div>
       </div>
@@ -719,6 +725,10 @@ ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
       const row = el('div', 'row');
       row.appendChild(stepper(p, () => { pintarCarrito(); render(); }));
       row.appendChild(el('span', 'sub', p.pvp > 0 ? money(sub) : 'Consultar'));
+      const qx = el('button', 'quitar'); qx.type = 'button'; qx.setAttribute('aria-label', 'Quitar ' + p.nombre + ' del pedido');
+      qx.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg>';
+      qx.addEventListener('click', () => { delete cart[c]; ls.set('mass_cart', cart); pintarCarrito(); render(); toast('Producto quitado'); });
+      row.appendChild(qx);
       info.appendChild(row);
       if (p.agotado) info.appendChild(el('span', 'pill warn', 'Agotado: lo confirmamos contigo'));
       it.append(th, info); list.appendChild(it);
@@ -726,6 +736,7 @@ ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
     $('cartTotal').textContent = money(total);
     $('cartEmpty').hidden = codes.length > 0;
     $('cartForm').hidden = codes.length === 0;
+    $('cartClearTop').hidden = codes.length === 0 || !$('cartDone').hidden;
     pintarQuien();
   }
   function pintarQuien(){
@@ -778,7 +789,7 @@ ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
     }
     $('doneMsg').textContent = 'Pedido N° ' + ultimoPedido.num + ' enviado a WhatsApp.';
     $('doneCompartir').hidden = !puedeCompartirArchivos();
-    $('cartForm').hidden = true; $('cartList').hidden = true; $('cartDone').hidden = false;
+    $('cartForm').hidden = true; $('cartList').hidden = true; $('cartDone').hidden = false; $('cartClearTop').hidden = true;
   });
 
   // ---------- nota de pedido ----------
@@ -986,8 +997,8 @@ ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
     return doc;
   }
 
-  $('cartClear').addEventListener('click', () => {
-    if (!confirm('¿Vaciar todo el pedido?')) return;
+  $('cartClearTop').addEventListener('click', () => {
+    if (!confirm('¿Vaciar todo el carrito? Se quitarán todos los productos.')) return;
     cart = {}; ls.set('mass_cart', cart); pintarCarrito(); render();
   });
   $('cartBtn').addEventListener('click', () => { if (!window.jspdf) cargarScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js').catch(() => {}); $('cartDone').hidden = true; $('cartList').hidden = false; pintarCarrito(); abrir('cartSheet'); });
