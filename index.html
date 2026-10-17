@@ -174,6 +174,33 @@ ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
 .cli .dt{font-size:14px;color:var(--muted);overflow-wrap:anywhere}
 .cli .btn{grid-row:1/span 3;grid-column:2;min-height:40px;padding:0 12px;font-size:14px}
 .btn.danger{border-color:var(--warn-fg);color:var(--warn-fg)}
+.panel.ancho{max-width:780px}
+.nota{background:#fff;color:#1A1814;border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.nota .hint{color:#5E584C}
+.n-cab{display:grid;grid-template-columns:auto 1fr;gap:10px 12px;align-items:center}
+.n-emp{display:flex;flex-direction:column;font-size:12.5px;color:#5E584C;line-height:1.35}
+.n-emp b{font-family:var(--font-display);font-size:17px;color:#1A1814}
+.n-num{grid-column:1/-1;border:2px solid #C99A2E;border-radius:10px;padding:8px 12px;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
+.n-num span{font-weight:800;font-size:13px;letter-spacing:.04em}
+.n-num b{font-family:var(--font-display);color:#8A6510;font-size:18px}
+.n-num small{color:#5E584C;margin-left:auto}
+@media (min-width:600px){.n-cab{grid-template-columns:auto 1fr auto}.n-num{grid-column:auto;flex-direction:column;align-items:center;gap:2px}.n-num small{margin:0}}
+.n-cli{background:#F3E9CF;border-radius:10px;padding:10px 12px;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px}
+.n-cli span{overflow-wrap:anywhere}
+.n-cli .k{font-weight:800}
+.n-tabla{overflow-x:auto}
+.n-tabla table{width:100%;border-collapse:collapse;font-size:13.5px}
+.n-tabla th{background:#1A1814;color:#F3E9CF;font-size:12px;text-align:left;padding:7px 8px;white-space:nowrap}
+.n-tabla th:nth-child(n+3){text-align:right}
+.n-tabla td{padding:7px 8px;border-bottom:1px solid #E7E2D6;vertical-align:top}
+.n-tabla tr:nth-child(even) td{background:#FBFAF6}
+.n-tabla td span{display:block;font-weight:600}
+.n-tabla td small{color:#5E584C}
+.n-tabla td.c{text-align:center;font-weight:800}
+.n-tabla td.r{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.n-tot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+.n-total{background:#C99A2E;color:#1A1814;border-radius:10px;padding:8px 14px;display:flex;gap:24px;align-items:baseline;font-family:var(--font-display);font-weight:800;font-size:18px;margin-left:auto}
+.n-nota{margin:0;font-size:14px}
 .install{background:var(--gold-soft);border-bottom:1px solid var(--line)}
 .install .wrap{display:flex;align-items:center;gap:10px;padding-block:8px;font-size:15px}
 .install .sp{flex:1}
@@ -288,7 +315,11 @@ ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
     <div id="cartDone" class="form" hidden>
       <div class="okmsg" id="doneMsg"></div>
       <p class="hint" style="margin:0">Te responderemos por WhatsApp para confirmar precios, disponibilidad y la forma de pago.</p>
-      <button type="button" class="btn primary" id="donePdf">Descargar nota de pedido (PDF)</button>
+      <button type="button" class="btn primary" id="doneVer">Ver mi nota de pedido</button>
+      <div class="btns">
+        <button type="button" class="btn grow" id="donePdf">Descargar PDF</button>
+        <button type="button" class="btn grow" id="doneCompartir" hidden>Enviar el PDF</button>
+      </div>
       <button type="button" class="btn wa" id="doneWa">Abrir WhatsApp otra vez</button>
       <div class="btns">
         <button type="button" class="btn quiet" id="doneBack">Volver al pedido</button>
@@ -444,6 +475,19 @@ ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
   </div>
 </div>
 
+<!-- nota de pedido -->
+<div class="sheet" id="notaSheet" hidden>
+  <div class="panel ancho" role="dialog" aria-modal="true" aria-label="Nota de pedido">
+    <div class="phead"><h2>Nota de pedido</h2><button type="button" class="x" data-close aria-label="Cerrar">✕</button></div>
+    <div class="nota" id="notaDoc"></div>
+    <div class="btns">
+      <button type="button" class="btn primary grow" id="notaPdf">Descargar PDF</button>
+      <button type="button" class="btn grow" id="notaCompartir" hidden>Compartir PDF</button>
+      <a class="btn wa grow" id="notaResponder" target="_blank" rel="noopener" hidden>Responder al cliente</a>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script>
@@ -586,11 +630,11 @@ ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
 
   function accionesAdmin(p, cont){
     cont.replaceChildren();
-    const up = el('label', 'btn primary grow', fotoUrl(p) ? 'Cambiar foto' : 'Subir foto');
+    const up = el('label', 'btn quiet grow', fotoUrl(p) ? 'Cambiar foto' : 'Subir foto');
     const inp = el('input'); inp.type = 'file'; inp.accept = 'image/*';
     inp.addEventListener('change', () => { if (inp.files[0]) subirFoto(p, inp.files[0]); inp.value = ''; });
     up.appendChild(inp); cont.appendChild(up);
-    const ed = el('button', 'btn grow', 'Editar'); ed.type = 'button';
+    const ed = el('button', 'btn quiet grow', 'Editar'); ed.type = 'button';
     ed.addEventListener('click', () => abrirEditor(p)); cont.appendChild(ed);
   }
 
@@ -612,8 +656,9 @@ ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
     art.appendChild(b);
     const act = el('div', 'act');
     const refrescar = () => accionesCliente(p, act, refrescar);
-    if (admin) accionesAdmin(p, act); else refrescar();
+    refrescar();
     art.appendChild(act);
+    if (admin){ const adm = el('div', 'act'); accionesAdmin(p, adm); art.appendChild(adm); }
     return art;
   }
 
@@ -646,9 +691,10 @@ ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
     $('detNombre').textContent = p.nombre;
     $('detPrecio').textContent = p.pvp > 0 ? money(p.pvp) : 'Precio a consultar';
     $('detPill').replaceChildren(p.agotado ? el('span', 'pill warn', 'Agotado') : el('span', 'pill ok', 'Disponible'));
-    const act = $('detAct');
-    if (admin) accionesAdmin(p, act);
-    else { const r = () => { accionesCliente(p, act, r); render(); }; accionesCliente(p, act, r); }
+    const act = $('detAct'); act.replaceChildren();
+    const cli = el('div', 'btns'); cli.style.flex = '1 1 100%'; act.appendChild(cli);
+    const r = () => { accionesCliente(p, cli, r); render(); }; accionesCliente(p, cli, r);
+    if (admin){ const adm = el('div', 'btns'); adm.style.flex = '1 1 100%'; accionesAdmin(p, adm); act.appendChild(adm); }
     abrir('detSheet');
   }
 
@@ -731,53 +777,131 @@ ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
         nota: 'Pedido N° ' + up.num + (up.nota ? ' · ' + up.nota : ''), total: up.total, items }, true).catch(() => {});
     }
     $('doneMsg').textContent = 'Pedido N° ' + ultimoPedido.num + ' enviado a WhatsApp.';
+    $('doneCompartir').hidden = !puedeCompartirArchivos();
     $('cartForm').hidden = true; $('cartList').hidden = true; $('cartDone').hidden = false;
   });
 
   // ---------- nota de pedido ----------
   let ultimoPedido = null;
-  const ANCHO = 30;   // caracteres por línea: cabe en la pantalla de un celular en WhatsApp
-  const linea = (ch) => ch.repeat(ANCHO);
-  const centro = (t) => { t = String(t).slice(0, ANCHO); const e = Math.floor((ANCHO - t.length) / 2); return ' '.repeat(e) + t; };
-  const lados = (a, b) => { a = String(a); b = String(b); return a + ' '.repeat(Math.max(1, ANCHO - a.length - b.length)) + b; };
-  function partir(texto, ancho){
-    const out = []; let cur = '';
-    String(texto).split(/\s+/).forEach((w) => {
-      while (w.length > ancho){ if (cur){ out.push(cur); cur = ''; } out.push(w.slice(0, ancho)); w = w.slice(ancho); }
-      if (!cur) cur = w; else if ((cur + ' ' + w).length <= ancho) cur += ' ' + w; else { out.push(cur); cur = w; }
-    });
-    if (cur) out.push(cur); return out;
-  }
-  const dato = (et, v) => partir(v, ANCHO - 9).map((l, i) => (i ? ' '.repeat(9) : (et + ':').padEnd(9)) + l);  // etiquetas de 7 letras máx.
+  const unidadesDe = (o) => o.items.reduce((s, x) => s + x.q, 0);
 
-  function textoNota(o){
-    const L = [];
-    L.push(centro('MASS FERRETERÍA'), centro('Av. León Rodrigo Pesantes'), centro('y Kuwait · Santo Domingo'), centro('WhatsApp 0959920159'));
-    L.push(linea('='), centro('NOTA DE PEDIDO'), centro('N° ' + o.num), lados('Fecha:', o.fecha), linea('-'));
-    L.push(...dato('Cliente', o.nombre));
-    if (o.ruc) L.push(...dato('CI/RUC', o.ruc));
-    if (o.tel) L.push(...dato('Teléf.', o.tel));
-    if (o.correo) L.push(...dato('Correo', o.correo));
-    L.push(...dato('Entrega', o.entrega));
-    if (o.dir) L.push(...dato('Direc.', o.dir));
-    L.push(linea('-'), 'CANT DESCRIPCIÓN', lados('     P. UNIT.', 'SUBTOTAL'), linea('-'));
-    o.items.forEach((x) => {
-      const nl = partir(x.n, ANCHO - 5);
-      L.push(String(x.q).padEnd(5) + nl[0]);
-      nl.slice(1).forEach((l) => L.push('     ' + l));
-      L.push('     Cód. ' + x.c);
-      L.push(x.p > 0 ? lados('     ' + money(x.p), money(x.p * x.q)) : lados('', 'Por consultar'));
-    });
-    const unidades = o.items.reduce((s, x) => s + x.q, 0);
-    L.push(linea('-'), lados('Artículos: ' + o.items.length, 'Unidades: ' + unidades), linea('='), lados('TOTAL:', money(o.total)), linea('='));
-    if (o.nota) L.push(...partir('Nota: ' + o.nota, ANCHO));
-    L.push(...partir('Valores referenciales, sujetos a confirmación de stock y precio.', ANCHO));
-    return L.join('\n');
+  // El pedido viaja dentro del enlace (no se guarda en ningún servidor).
+  function codificar(o){
+    const d = { v: 1, n: o.num, f: o.fecha, c: [o.nombre, o.ruc, o.tel, o.correo], e: o.entrega, d: o.dir, o: o.nota,
+      i: o.items.map((x) => [x.c, x.q, x.p]) };
+    const bytes = new TextEncoder().encode(JSON.stringify(d));
+    let bin = ''; bytes.forEach((b) => { bin += String.fromCharCode(b); });
+    return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   }
+  function decodificar(t){
+    const b = atob(t.replace(/-/g, '+').replace(/_/g, '/'));
+    const d = JSON.parse(new TextDecoder().decode(Uint8Array.from(b, (ch) => ch.charCodeAt(0))));
+    const items = (d.i || []).map((x) => ({ c: String(x[0]), q: Number(x[1]) || 0, p: Number(x[2]) || 0,
+      n: byCode[String(x[0])] ? byCode[String(x[0])].nombre : 'Producto cód. ' + x[0] }));
+    const c = d.c || [];
+    return { num: d.n, fecha: d.f, nombre: c[0] || '', ruc: c[1] || '', tel: c[2] || '', correo: c[3] || '',
+      entrega: d.e || '', dir: d.d || '', nota: d.o || '', items,
+      total: Math.round(items.reduce((s, x) => s + x.p * x.q, 0) * 100) / 100 };
+  }
+  const enlaceNota = (o) => location.origin + location.pathname.replace(/index\.html$/, '') + '#nota=' + codificar(o);
+
   function abrirWhatsApp(){
-    const msg = '*NOTA DE PEDIDO N° ' + ultimoPedido.num + '*\n```\n' + textoNota(ultimoPedido) + '\n```';
+    const o = ultimoPedido;
+    const msg = ['*NOTA DE PEDIDO N° ' + o.num + '*', 'MASS FERRETERÍA', '',
+      'Cliente: ' + o.nombre, 'Entrega: ' + o.entrega + (o.dir ? ' – ' + o.dir : ''),
+      'Artículos: ' + o.items.length + ' · Unidades: ' + unidadesDe(o), '*Total: ' + money(o.total) + '*', '',
+      '📄 Ver la nota de pedido (PDF):', enlaceNota(o)].join('\n');
     window.open('https://wa.me/' + WA + '?text=' + encodeURIComponent(msg), '_blank', 'noopener');
   }
+
+  // Vista de la nota (como factura), para el cliente y para la tienda
+  let notaVista = null;
+  function verNota(o, desdeEnlace){
+    notaVista = o;
+    const box = $('notaDoc'); box.replaceChildren();
+    const cab = el('div', 'n-cab');
+    const lg = el('img'); lg.src = 'logo_mass.png'; lg.alt = ''; lg.width = 52; lg.height = 60;
+    const em = el('div', 'n-emp'); em.append(el('b', null, 'MASS FERRETERÍA'), el('span', null, 'Av. León Rodrigo Pesantes y Kuwait, esquina'),
+      el('span', null, 'Santo Domingo de los Tsáchilas'), el('span', null, 'WhatsApp 0959920159'));
+    const nb = el('div', 'n-num'); nb.append(el('span', null, 'NOTA DE PEDIDO'), el('b', null, 'N° ' + o.num), el('small', null, o.fecha));
+    cab.append(lg, em, nb); box.appendChild(cab);
+    const cli = el('div', 'n-cli');
+    [['Cliente', o.nombre], ['Cédula / RUC', o.ruc], ['Teléfono', o.tel], ['Correo', o.correo],
+      ['Entrega', o.entrega + (o.dir ? ': ' + o.dir : '')]].forEach(([k, v]) => { if (v){ cli.append(el('span', 'k', k), el('span', null, v)); } });
+    box.appendChild(cli);
+    const tw = el('div', 'n-tabla'); const t = el('table');
+    const th = el('tr'); ['Cant.', 'Descripción', 'P. unit.', 'Subtotal'].forEach((h) => th.appendChild(el('th', null, h)));
+    const thead = el('thead'); thead.appendChild(th); t.appendChild(thead);
+    const tb = el('tbody');
+    o.items.forEach((x) => {
+      const tr = el('tr');
+      tr.appendChild(el('td', 'c', String(x.q)));
+      const td = el('td'); td.append(el('span', null, x.n), el('small', null, 'Cód. ' + x.c)); tr.appendChild(td);
+      tr.appendChild(el('td', 'r', x.p > 0 ? money(x.p) : 'Consultar'));
+      tr.appendChild(el('td', 'r', x.p > 0 ? money(x.p * x.q) : '-'));
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb); tw.appendChild(t); box.appendChild(tw);
+    const tot = el('div', 'n-tot');
+    tot.append(el('span', 'hint', 'Artículos: ' + o.items.length + ' · Unidades: ' + unidadesDe(o)));
+    const tt = el('div', 'n-total'); tt.append(el('span', null, 'TOTAL'), el('b', null, money(o.total))); tot.appendChild(tt);
+    box.appendChild(tot);
+    if (o.nota) box.appendChild(el('p', 'n-nota', 'Nota: ' + o.nota));
+    box.appendChild(el('p', 'hint', 'Documento sin valor tributario. Valores referenciales, sujetos a confirmación de stock y precio por parte de MASS FERRETERÍA.'));
+    // responder al cliente (para la tienda)
+    const tel = String(o.tel || '').replace(/\D/g, '');
+    const telWa = tel.startsWith('593') ? tel : tel.startsWith('0') ? '593' + tel.slice(1) : tel;
+    const rb = $('notaResponder');
+    rb.hidden = !(admin || desdeEnlace) || telWa.length < 10;
+    rb.href = 'https://wa.me/' + telWa + '?text=' + encodeURIComponent('Hola ' + o.nombre.split(' ')[0] + ', recibimos tu pedido N° ' + o.num + ' en MASS FERRETERÍA. ');
+    $('notaCompartir').hidden = !puedeCompartirArchivos();
+    abrir('notaSheet');
+  }
+  function puedeCompartirArchivos(){
+    try { return !!(navigator.canShare && navigator.canShare({ files: [new File(['x'], 'x.pdf', { type: 'application/pdf' })] })); }
+    catch (e) { return false; }
+  }
+  async function pdfDe(o){
+    const doc = await notaPDF(o);
+    const nombre = 'Nota_de_pedido_MASS_' + o.num + '.pdf';
+    return { blob: doc.output('blob'), nombre };
+  }
+  async function descargarPDF(o, btn){
+    ocupado(btn, true, 'Preparando PDF…');
+    try { const r = await pdfDe(o); descargar(r.blob, r.nombre); toast('PDF descargado'); }
+    catch (e) { toast('No se pudo crear el PDF. Revisa tu conexión.'); }
+    finally { ocupado(btn, false); }
+  }
+  async function compartirPDF(o, btn){
+    ocupado(btn, true, 'Preparando PDF…');
+    try {
+      const r = await pdfDe(o);
+      const file = new File([r.blob], r.nombre, { type: 'application/pdf' });
+      try { await navigator.share({ files: [file], title: 'Nota de pedido ' + o.num, text: 'Nota de pedido N° ' + o.num + ' – MASS FERRETERÍA' }); }
+      catch (e) { if (!e || e.name !== 'AbortError') descargar(r.blob, r.nombre); }
+    } catch (e) { toast('No se pudo crear el PDF. Revisa tu conexión.'); }
+    finally { ocupado(btn, false); }
+  }
+  $('notaPdf').addEventListener('click', () => { if (notaVista) descargarPDF(notaVista, $('notaPdf')); });
+  $('notaCompartir').addEventListener('click', () => { if (notaVista) compartirPDF(notaVista, $('notaCompartir')); });
+  function revisarEnlaceNota(){
+    const m = location.hash.match(/^#nota=([A-Za-z0-9_-]+)/);
+    if (!m) return;
+    try { verNota(decodificar(m[1]), true); } catch (e) { toast('El enlace de la nota de pedido no es válido.'); }
+    history.replaceState(null, '', location.pathname + location.search);
+  }
+  window.addEventListener('hashchange', revisarEnlaceNota);
+
+  $('doneVer').addEventListener('click', () => { if (ultimoPedido) verNota(ultimoPedido); });
+  $('donePdf').addEventListener('click', () => { if (ultimoPedido) descargarPDF(ultimoPedido, $('donePdf')); });
+  $('doneCompartir').addEventListener('click', () => { if (ultimoPedido) compartirPDF(ultimoPedido, $('doneCompartir')); });
+  $('doneWa').addEventListener('click', () => { if (ultimoPedido) abrirWhatsApp(); });
+  $('doneBack').addEventListener('click', () => { $('cartDone').hidden = true; $('cartList').hidden = false; pintarCarrito(); });
+  $('doneNew').addEventListener('click', () => {
+    cart = {}; ls.set('mass_cart', cart); $('cNota').value = '';
+    $('cartDone').hidden = true; $('cartList').hidden = false; pintarCarrito(); render(); cerrar('cartSheet');
+    toast('Listo para un pedido nuevo');
+  });
 
   function cargarScript(src){
     return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
@@ -861,33 +985,12 @@ ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
     doc.text(doc.splitTextToSize('Documento sin valor tributario. Valores referenciales, sujetos a confirmación de stock y precio por parte de MASS FERRETERÍA.', W - 2 * M), M, y);
     return doc;
   }
-  $('donePdf').addEventListener('click', async () => {
-    if (!ultimoPedido) return;
-    const b = $('donePdf'); ocupado(b, true, 'Preparando PDF…');
-    try {
-      const doc = await notaPDF(ultimoPedido);
-      const nombre = 'Nota_de_pedido_MASS_' + ultimoPedido.num + '.pdf';
-      const blob = doc.output('blob');
-      const file = new File([blob], nombre, { type: 'application/pdf' });
-      if (navigator.canShare && navigator.canShare({ files: [file] }) && /Android|iPhone|iPad/i.test(navigator.userAgent)){
-        try { await navigator.share({ files: [file], title: 'Nota de pedido ' + ultimoPedido.num }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
-      }
-      descargar(blob, nombre);
-    } catch (e) { toast('No se pudo crear el PDF. Revisa tu conexión.'); }
-    finally { ocupado(b, false); }
-  });
-  $('doneWa').addEventListener('click', () => { if (ultimoPedido) abrirWhatsApp(); });
-  $('doneBack').addEventListener('click', () => { $('cartDone').hidden = true; $('cartList').hidden = false; pintarCarrito(); });
-  $('doneNew').addEventListener('click', () => {
-    cart = {}; ls.set('mass_cart', cart); $('cNota').value = '';
-    $('cartDone').hidden = true; $('cartList').hidden = false; pintarCarrito(); render(); cerrar('cartSheet');
-    toast('Listo para un pedido nuevo');
-  });
+
   $('cartClear').addEventListener('click', () => {
     if (!confirm('¿Vaciar todo el pedido?')) return;
     cart = {}; ls.set('mass_cart', cart); pintarCarrito(); render();
   });
-  $('cartBtn').addEventListener('click', () => { $('cartDone').hidden = true; $('cartList').hidden = false; pintarCarrito(); abrir('cartSheet'); });
+  $('cartBtn').addEventListener('click', () => { if (!window.jspdf) cargarScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js').catch(() => {}); $('cartDone').hidden = true; $('cartList').hidden = false; pintarCarrito(); abrir('cartSheet'); });
 
   // ---------- hojas ----------
   let ultimoFoco = null;
@@ -1346,7 +1449,7 @@ ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
   fetch('catalogo.json', { cache: 'no-cache' }).then((r) => { if (!r.ok) throw 0; return r.json(); })
     .then((d) => cargarCatalogo(local || d))
     .catch(() => { if (local) cargarCatalogo(local); else $('nShown').textContent = 'No se pudo cargar el catálogo. Revisa tu conexión.'; })
-    .then(() => { if (sessionStorage.getItem('mass_admin') === '1' && ls.get('mass_pin', null)) entrarAdmin(); });
+    .then(() => { if (sessionStorage.getItem('mass_admin') === '1' && ls.get('mass_pin', null)) entrarAdmin(); revisarEnlaceNota(); });
 })();
 </script>
 </body>
