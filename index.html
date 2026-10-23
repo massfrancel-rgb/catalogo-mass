@@ -115,7 +115,18 @@ header.top{position:sticky;top:0;z-index:10;background:var(--dark);color:#F2EEE5
 .step{display:flex;align-items:center;border:1.5px solid var(--gold);border-radius:10px;overflow:hidden;flex:1;min-height:44px}
 .step button{width:44px;height:44px;border:0;background:var(--gold-soft);font-size:22px;font-weight:800;cursor:pointer;flex:0 0 auto}
 .step span{flex:1;text-align:center;font-weight:800;font-variant-numeric:tabular-nums}
-.more{display:flex;justify-content:center;padding-block:4px 30px}
+.more{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 16px;padding-block:8px 30px}
+.more #more{min-height:46px}
+.pager{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-left:auto}
+.pager button{min-width:42px;height:42px;padding:0 8px;border-radius:99px;border:1.5px solid var(--line);background:var(--surface);color:var(--fg);font:inherit;font-weight:800;font-size:15px;cursor:pointer;font-variant-numeric:tabular-nums}
+.pager button:hover{border-color:var(--gold)}
+.pager button[aria-current="page"]{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+.pager button.vis{background:var(--gold-soft);border-color:var(--gold)}
+.pager button:disabled{opacity:.35;cursor:default}
+.pager .dots{color:var(--muted);font-weight:800;padding:0 2px}
+.pager select{height:42px;border-radius:99px;border:1.5px solid var(--line);background:var(--surface);color:var(--fg);font:inherit;font-weight:700;padding:0 12px}
+.pager .ir{font-size:14px;color:var(--muted);font-weight:700;margin-left:6px}
+@media (max-width:640px){.more{justify-content:center}.pager{margin:0 auto;justify-content:center}.pager button{min-width:38px;height:38px;font-size:14px}}
 .empty{padding:40px 16px;text-align:center;color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:14px}
 
 /* ---------- pie ---------- */
@@ -396,7 +407,10 @@ a.icard svg{stroke:var(--wa)}
   </div>
   <div id="grid" class="grid" aria-live="polite"></div>
   <div id="empty" class="empty" hidden>No encontramos productos con esa búsqueda. Escríbenos por WhatsApp y te ayudamos.</div>
-  <div class="more"><button type="button" class="btn" id="more" hidden>Ver más productos</button></div>
+  <div class="more">
+    <button type="button" class="btn" id="more" hidden>Ver más productos</button>
+    <nav class="pager" id="pager" aria-label="Páginas de productos" hidden></nav>
+  </div>
 </main>
 
 <footer>
@@ -709,7 +723,7 @@ a.icard svg{stroke:var(--wa)}
   };
 
   let cats = [], prods = [], byCode = {}, conFoto = new Set(), fechaCat = '';
-  let limite = PAGE, admin = false;
+  let limite = PAGE, pagina = 1, admin = false;
   let cart = ls.get('mass_cart', {});           // code -> cantidad
   let extras = {};                              // code -> [2,3,...] fotos adicionales (fotos/CODE_2.jpg …)
   let info = {};                                // textos de las páginas de la empresa
@@ -879,14 +893,52 @@ a.icard svg{stroke:var(--wa)}
     return art;
   }
 
+  function irPagina(n){
+    pagina = n; limite = PAGE; render();
+    const g = $('grid'), top = g.getBoundingClientRect().top + scrollY - document.querySelector('header.top').offsetHeight - 70;
+    scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+  }
+  function pintarPager(total, desde, hasta){
+    const pg = $('pager'); pg.replaceChildren();
+    pg.hidden = total < 2; if (total < 2) return;
+    const btn = (txt, n, extra) => {
+      const b = el('button', extra || null, txt); b.type = 'button';
+      if (n == null) b.disabled = true; else b.addEventListener('click', () => irPagina(n));
+      return b;
+    };
+    const prev = btn('‹', desde > 1 ? desde - 1 : null); prev.setAttribute('aria-label', 'Página anterior'); pg.appendChild(prev);
+    const ver = new Set([1, total]);
+    for (let i = desde - 1; i <= hasta + 1; i++) if (i >= 1 && i <= total) ver.add(i);
+    let ant = 0;
+    Array.from(ver).sort((a, b) => a - b).forEach((n) => {
+      if (n - ant > 1) pg.appendChild(el('span', 'dots', '…'));
+      const b = btn(String(n), n, n > desde && n <= hasta ? 'vis' : null);
+      b.setAttribute('aria-label', 'Página ' + n);
+      if (n === desde) b.setAttribute('aria-current', 'page');
+      pg.appendChild(b); ant = n;
+    });
+    const next = btn('›', hasta < total ? hasta + 1 : null); next.setAttribute('aria-label', 'Página siguiente'); pg.appendChild(next);
+    if (total > 7){
+      pg.appendChild(el('span', 'ir', 'Ir a'));
+      const sel = el('select'); sel.setAttribute('aria-label', 'Ir a la página');
+      for (let i = 1; i <= total; i++) sel.appendChild(new Option('Pág. ' + i + ' de ' + total, String(i)));
+      sel.value = String(desde);
+      sel.addEventListener('change', () => irPagina(Number(sel.value)));
+      pg.appendChild(sel);
+    }
+  }
   function render(){
     const l = lista();
     const grid = $('grid');
     const frag = document.createDocumentFragment();
-    l.slice(0, limite).forEach((p) => frag.appendChild(card(p)));
+    const paginas = Math.max(1, Math.ceil(l.length / PAGE));
+    if (pagina > paginas) pagina = paginas;
+    const ini = (pagina - 1) * PAGE, fin = Math.min(l.length, ini + limite);
+    l.slice(ini, fin).forEach((p) => frag.appendChild(card(p)));
     grid.replaceChildren(frag);
     $('empty').hidden = l.length > 0 || !prods.length;
-    const resto = l.length - Math.min(limite, l.length);
+    const resto = l.length - fin;
+    pintarPager(paginas, pagina, Math.ceil(fin / PAGE));
     $('more').hidden = resto <= 0;
     $('more').textContent = 'Ver más productos (' + resto.toLocaleString('es-EC') + ')';
     let txt = '<b>' + l.length.toLocaleString('es-EC') + '</b> productos';
@@ -1310,16 +1362,16 @@ a.icard svg{stroke:var(--wa)}
 
   // ---------- filtros ----------
   let tq = null;
-  $('q').addEventListener('input', () => { clearTimeout(tq); tq = setTimeout(() => { limite = PAGE; render(); }, 150); });
-  ['cat', 'orden'].forEach((id) => $(id).addEventListener('change', () => { limite = PAGE; render(); }));
+  $('q').addEventListener('input', () => { clearTimeout(tq); tq = setTimeout(() => { limite = PAGE; pagina = 1; render(); }, 150); });
+  ['cat', 'orden'].forEach((id) => $(id).addEventListener('change', () => { limite = PAGE; pagina = 1; render(); }));
   ['tgFoto', 'tgDisp', 'tgSinFoto'].forEach((id) => $(id).addEventListener('click', () => {
     const b = $(id), on = b.getAttribute('aria-pressed') !== 'true';
     b.setAttribute('aria-pressed', String(on));
     if (on && id === 'tgFoto') $('tgSinFoto').setAttribute('aria-pressed', 'false');
     if (on && id === 'tgSinFoto') $('tgFoto').setAttribute('aria-pressed', 'false');
-    limite = PAGE; render();
+    limite = PAGE; pagina = 1; render();
   }));
-  $('more').addEventListener('click', () => { limite += PAGE * 2; render(); });
+  $('more').addEventListener('click', () => { limite += PAGE; render(); });
 
   // ---------- administrador ----------
   async function sha(s){
