@@ -242,6 +242,47 @@ a.icard svg{stroke:var(--wa)}
 .n-total{background:#C99A2E;color:#1A1814;border-radius:10px;padding:8px 14px;display:flex;gap:24px;align-items:baseline;font-family:var(--font-display);font-weight:800;font-size:18px;margin-left:auto}
 .n-nota{margin:0;font-size:14px}
 .install{background:var(--gold-soft);border-bottom:1px solid var(--line)}
+/* ---------- galería ---------- */
+.panel > *{flex-shrink:0}
+.det-img{position:relative;height:min(46vh,560px);aspect-ratio:auto}
+.det-img .nav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:99px;border:0;background:rgba(26,24,20,.65);color:#fff;font-size:24px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.det-img .nav.prev{left:8px}.det-img .nav.next{right:8px}
+.det-img .cnt{position:absolute;bottom:8px;right:10px;background:rgba(26,24,20,.7);color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:99px}
+.thumbs{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 4px}
+.thumb{position:relative;flex:0 0 64px;width:64px;height:64px;border-radius:10px;border:2px solid var(--line);background:#fff;padding:0;cursor:pointer;overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:contain}
+.thumb[aria-current="true"]{border-color:var(--gold);box-shadow:0 0 0 2px rgba(201,154,46,.35)}
+.thumb .del{position:absolute;top:2px;right:2px;width:22px;height:22px;border-radius:99px;border:0;background:var(--warn-fg);color:#fff;font-size:13px;font-weight:800;line-height:22px;cursor:pointer;padding:0}
+.ph .nfotos{position:absolute;top:5px;right:5px;background:rgba(26,24,20,.72);color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:99px}
+/* ---------- menú de la empresa ---------- */
+.strip{background:#0F0E0B;color:#CDBF9C;font-size:13px}
+.strip .wrap{display:flex;gap:6px 22px;align-items:center;padding-block:6px;flex-wrap:wrap}
+.strip a{color:#F3E9CF;text-decoration:none;font-weight:700}
+.strip .sp{flex:1}
+@media (max-width:640px){.strip{display:none}}
+.menubar{background:var(--dark);border-top:1px solid #2A261F}
+.menu{display:flex;gap:4px;flex-wrap:wrap;padding-block:6px}
+.menu::-webkit-scrollbar{display:none}
+.menu button{flex:0 0 auto;background:none;border:0;color:#F3E9CF;font:inherit;font-weight:800;font-size:15px;padding:8px 12px;border-radius:10px;cursor:pointer;white-space:nowrap}
+.menu button:hover,.menu button:focus-visible{background:#2A261F;outline:none}
+.menu button.reg{background:var(--gold);color:#1A1814}
+.menu svg{width:18px;height:18px;vertical-align:-3px;margin-right:6px}
+@media (max-width:640px){.menu{gap:6px;padding-block:8px}.menu button{font-size:13.5px;padding:7px 10px;background:#2A261F}.menu button.reg{background:var(--gold)}}
+.info-body{display:flex;flex-direction:column;gap:10px;font-size:15.5px;line-height:1.55}
+.info-body h3{margin:6px 0 0;font-family:var(--font-display);font-size:17px}
+.info-body p{margin:0}
+.info-body ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.info-hero{display:flex;align-items:center;gap:14px;padding:14px;border-radius:14px;background:var(--dark);color:#F3E9CF}
+.info-hero img{width:52px;height:auto}
+.info-hero b{font-family:var(--font-display);font-size:18px;display:block}
+.info-hero span{font-size:13px;color:#CDBF9C}
+.valores{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.valor{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--bg)}
+.valor b{display:block;font-family:var(--font-display);font-size:15px;color:var(--gold-ink);margin-bottom:2px}
+.valor span{font-size:14px}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.contact-grid .btn{min-height:52px}
+#infoEdit textarea{min-height:260px;font-size:15px;line-height:1.5}
 /* ---------- buscador resaltado ---------- */
 .searchbox{position:relative;flex:3 1 260px;min-width:0;display:flex}
 .searchbox svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:22px;height:22px;color:#8A6510;pointer-events:none}
@@ -276,6 +317,14 @@ a.icard svg{stroke:var(--wa)}
 </head>
 <body>
 
+<div class="strip">
+  <div class="wrap">
+    <a href="https://wa.me/593959920159" target="_blank" rel="noopener">WhatsApp 0959920159</a>
+    <span>Av. León Rodrigo Pesantes y Kuwait, esquina · Santo Domingo de los Tsáchilas</span>
+    <span class="sp"></span>
+    <span>Arma tu pedido y envíalo por WhatsApp</span>
+  </div>
+</div>
 <header class="top">
   <div class="wrap">
     <div class="brand">
@@ -308,6 +357,15 @@ a.icard svg{stroke:var(--wa)}
     </div>
   </div>
 </header>
+<div class="menubar"><div class="wrap">
+    <nav class="menu" aria-label="Información de la empresa">
+      <button type="button" data-info="quienes">Quiénes somos</button>
+      <button type="button" data-info="valores">Valores</button>
+      <button type="button" data-info="pagos">Formas de pago</button>
+      <button type="button" data-info="contacto">Contactos</button>
+      <button type="button" class="reg" id="menuReg">Registrarse</button>
+    </nav>
+</div></div>
 
 <div class="install" id="installBar" hidden>
   <div class="wrap"><span class="sp">Instala el catálogo como app en tu equipo.</span>
@@ -357,6 +415,10 @@ a.icard svg{stroke:var(--wa)}
   <div class="panel" role="dialog" aria-modal="true" aria-labelledby="detNombre">
     <div class="phead"><span class="marca" id="detMarca"></span><span class="cod" id="detCod"></span><button type="button" class="x" data-close aria-label="Cerrar">✕</button></div>
     <div class="det-img" id="detImg"></div>
+    <div class="thumbs" id="detThumbs" hidden></div>
+    <div class="btns" id="detFotoAdm" hidden>
+      <label class="btn quiet grow">＋ Agregar más fotos<input type="file" accept="image/*" multiple id="detMasFotos"></label>
+    </div>
     <h2 id="detNombre"></h2>
     <div class="phead"><span class="precio" id="detPrecio" style="padding:0"></span><span id="detPill"></span></div>
     <div class="btns" id="detAct"></div>
@@ -603,6 +665,31 @@ a.icard svg{stroke:var(--wa)}
   </div>
 </div>
 
+<!-- páginas de la empresa -->
+<div class="sheet" id="infoSheet" hidden>
+  <div class="panel ancho" role="dialog" aria-modal="true" aria-labelledby="infoTitle">
+    <div class="phead"><h2 id="infoTitle"></h2><button type="button" class="x" data-close aria-label="Cerrar">✕</button></div>
+    <div class="info-hero"><img src="logo_mass.png" alt=""><div><b>MASS FERRETERÍA</b><span>Santo Domingo de los Tsáchilas · Ecuador</span></div></div>
+    <div class="info-body" id="infoBody"></div>
+    <div class="contact-grid" id="infoContact" hidden>
+      <a class="btn wa" href="https://wa.me/593959920159" target="_blank" rel="noopener">WhatsApp</a>
+      <a class="btn" href="tel:0959920159">Llamar</a>
+      <a class="btn" href="https://www.google.com/maps/search/?api=1&query=Av.+Le%C3%B3n+Rodrigo+Pesantes+y+Kuwait+Santo+Domingo+Ecuador" target="_blank" rel="noopener">Cómo llegar</a>
+      <button type="button" class="btn" id="infoShare">Compartir catálogo</button>
+    </div>
+    <div class="btns" id="infoAdm" hidden><button type="button" class="btn quiet grow" id="infoEditBtn">✎ Editar esta página</button></div>
+    <form class="form" id="infoEdit" hidden novalidate>
+      <span class="hint">Escribe el texto. Deja una línea en blanco entre párrafos. Para un título empieza la línea con «## ». Para una lista empieza cada línea con «- ».</span>
+      <textarea id="infoTxt" maxlength="6000"></textarea>
+      <div class="btns">
+        <button type="button" class="btn quiet" id="infoReset">Texto original</button>
+        <button type="button" class="btn" id="infoCancel">Cancelar</button>
+        <button type="submit" class="btn primary grow">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script>
@@ -624,6 +711,8 @@ a.icard svg{stroke:var(--wa)}
   let cats = [], prods = [], byCode = {}, conFoto = new Set(), fechaCat = '';
   let limite = PAGE, admin = false;
   let cart = ls.get('mass_cart', {});           // code -> cantidad
+  let extras = {};                              // code -> [2,3,...] fotos adicionales (fotos/CODE_2.jpg …)
+  let info = {};                                // textos de las páginas de la empresa
   let fotosLocales = {};                        // code -> objectURL (admin, pendientes)
   let editando = null, pendienteImp = null, pinAdmin = '';
   let sesion = ls.get('mass_sesion', null);     // { token, perfil }
@@ -666,6 +755,8 @@ a.icard svg{stroke:var(--wa)}
   function cargarCatalogo(d){
     cats = d.c || [];
     conFoto = new Set(d.f || []);
+    extras = JSON.parse(JSON.stringify(d.x || {}));
+    info = Object.assign({}, d.i || {});
     fechaCat = d.fecha || '';
     prods = (d.p || []).map((x) => ({ code: String(x[0]), nombre: x[1], marca: x[2] || '', pvp: Number(x[3]) || 0, ci: x[4], agotado: x[5] === 1 }));
     const dd = d.d || {};
@@ -682,12 +773,19 @@ a.icard svg{stroke:var(--wa)}
   }
   function buscarDe(p){ return norm(p.code + ' ' + p.nombre + ' ' + p.marca + ' ' + (cats[p.ci] || '') + ' ' + (p.desc || '')); }
   function descripciones(){ const o = {}; prods.forEach((p) => { if (p.desc || p.esp) o[p.code] = [p.desc || '', p.esp || '']; }); return o; }
+  function extrasActuales(){ const o = {}; Object.keys(extras).forEach((c) => { if (byCode[c] && extras[c].length) o[c] = extras[c].slice(); }); return o; }
   function catalogoActual(){
-    return { c: cats, p: prods.map((p) => [p.code, p.nombre, p.marca, p.pvp, p.ci, p.agotado ? 1 : 0]), d: descripciones(),
+    return { c: cats, p: prods.map((p) => [p.code, p.nombre, p.marca, p.pvp, p.ci, p.agotado ? 1 : 0]), d: descripciones(), x: extrasActuales(), i: Object.assign({}, info),
       f: Array.from(new Set([...conFoto, ...Object.keys(fotosLocales)])).filter((c) => byCode[c]).sort(), fecha: hoy() };
   }
   function hoy(){ const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 
+  const urlFoto = (key) => fotosLocales[key] || 'fotos/' + encodeURIComponent(key) + '.jpg';
+  function fotosDe(p){
+    const l = []; const m = fotoUrl(p); if (m) l.push({ url: m, n: 1 });
+    (extras[p.code] || []).forEach((n) => l.push({ url: urlFoto(p.code + '_' + n), n }));
+    return l;
+  }
   const fotoUrl = (p) => fotosLocales[p.code] || (conFoto.has(p.code) ? 'fotos/' + encodeURIComponent(p.code) + '.jpg' : null);
   const iniciales = (p) => (p.marca || p.nombre || '?').replace(/[^A-Za-zÁÉÍÓÚÑ0-9 ]/g, '').trim().slice(0, 2).toUpperCase() || 'MF';
 
@@ -764,6 +862,7 @@ a.icard svg{stroke:var(--wa)}
       img.onerror = () => { img.remove(); ph.prepend(el('span', 'ini', iniciales(p))); }; ph.appendChild(img); }
     else ph.appendChild(el('span', 'ini', iniciales(p)));
     if (p.agotado) { const s = el('span', 'pill warn ag', 'Agotado'); ph.appendChild(s); }
+    const nf = (extras[p.code] || []).length + (url ? 1 : 0); if (nf > 1) ph.appendChild(el('span', 'nfotos', '📷 ' + nf));
     ph.addEventListener('click', () => abrirDetalle(p));
     art.appendChild(ph);
     const b = el('div', 'body');
@@ -804,10 +903,7 @@ a.icard svg{stroke:var(--wa)}
     detActual = p;
     $('detMarca').textContent = p.marca || 'MASS';
     $('detCod').textContent = ' · Cód. ' + p.code;
-    const box = $('detImg'); box.replaceChildren();
-    const url = fotoUrl(p);
-    if (url){ const i = el('img'); i.src = url; i.alt = 'Foto de ' + p.nombre; box.appendChild(i); }
-    else { const s = el('span', 'ini', iniciales(p)); s.style.cssText = 'font-family:var(--font-display);font-weight:800;font-size:64px;color:var(--gold);opacity:.5'; box.appendChild(s); }
+    pintarGaleria(p, 0);
     $('detNombre').textContent = p.nombre;
     $('detPrecio').textContent = p.pvp > 0 ? money(p.pvp) : 'Precio a consultar';
     $('detPill').replaceChildren(p.agotado ? el('span', 'pill warn', 'Agotado') : el('span', 'pill ok', 'Disponible'));
@@ -828,6 +924,71 @@ a.icard svg{stroke:var(--wa)}
     es.appendChild(t);
     mostrarTabDet('desc');
     abrir('detSheet');
+  }
+  let galIdx = 0;
+  function pintarGaleria(p, idx){
+    const fotos = fotosDe(p); galIdx = Math.max(0, Math.min(idx, fotos.length - 1));
+    const box = $('detImg'); box.replaceChildren();
+    if (fotos.length){
+      const i = el('img'); i.src = fotos[galIdx].url; i.alt = 'Foto ' + (galIdx + 1) + ' de ' + p.nombre; box.appendChild(i);
+      if (fotos.length > 1){
+        const a = el('button', 'nav prev', '‹'); a.type = 'button'; a.setAttribute('aria-label', 'Foto anterior');
+        const b = el('button', 'nav next', '›'); b.type = 'button'; b.setAttribute('aria-label', 'Foto siguiente');
+        a.addEventListener('click', () => pintarGaleria(p, (galIdx - 1 + fotos.length) % fotos.length));
+        b.addEventListener('click', () => pintarGaleria(p, (galIdx + 1) % fotos.length));
+        box.append(a, b, el('span', 'cnt', (galIdx + 1) + ' / ' + fotos.length));
+      }
+    } else { const s = el('span', 'ini', iniciales(p)); s.style.cssText = 'font-family:var(--font-display);font-weight:800;font-size:64px;color:var(--gold);opacity:.5'; box.appendChild(s); }
+    const th = $('detThumbs'); th.replaceChildren();
+    th.hidden = fotos.length < 2 && !(admin && fotos.length);
+    fotos.forEach((f, k) => {
+      const t = el('button', 'thumb'); t.type = 'button'; t.setAttribute('aria-label', 'Ver foto ' + (k + 1));
+      if (k === galIdx) t.setAttribute('aria-current', 'true');
+      const im = el('img'); im.src = f.url; im.alt = ''; im.loading = 'lazy'; t.appendChild(im);
+      t.addEventListener('click', () => pintarGaleria(p, k));
+      if (admin && f.n > 1){
+        const d = el('span', 'del', '✕'); d.setAttribute('role', 'button'); d.setAttribute('aria-label', 'Quitar esta foto');
+        d.addEventListener('click', (e) => { e.stopPropagation(); quitarExtra(p, f.n); });
+        t.appendChild(d);
+      }
+      th.appendChild(t);
+    });
+    $('detFotoAdm').hidden = !admin;
+  }
+  // deslizar con el dedo
+  (() => { let x0 = null;
+    $('detImg').addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; }, { passive: true });
+    $('detImg').addEventListener('touchend', (e) => {
+      if (x0 == null || !detActual) return; const dx = e.changedTouches[0].clientX - x0; x0 = null;
+      const n = fotosDe(detActual).length; if (n < 2 || Math.abs(dx) < 40) return;
+      pintarGaleria(detActual, (galIdx + (dx < 0 ? 1 : -1) + n) % n);
+    });
+  })();
+  $('detMasFotos').addEventListener('change', async () => {
+    const files = Array.from($('detMasFotos').files || []); $('detMasFotos').value = '';
+    if (!files.length || !detActual) return;
+    const p = detActual;
+    if (!fotoUrl(p)){ await subirFoto(p, files.shift()); }
+    let ok = 0;
+    for (const f of files){
+      try {
+        const blob = await reducir(f);
+        const l = extras[p.code] || (extras[p.code] = []);
+        const n = Math.max(1, ...l) + 1; const key = p.code + '_' + n;
+        await idb.put(key, blob); fotosLocales[key] = URL.createObjectURL(blob); l.push(n); ok++;
+      } catch (e) {}
+    }
+    if (ok){ guardarCatLocal(); render(); }
+    pintarGaleria(p, fotosDe(p).length - 1);
+    if (ok) toast(ok + (ok === 1 ? ' foto agregada' : ' fotos agregadas') + '. Recuerda «Publicar cambios».');
+  });
+  async function quitarExtra(p, n){
+    if (!confirm('¿Quitar esta foto del producto?')) return;
+    const key = p.code + '_' + n;
+    extras[p.code] = (extras[p.code] || []).filter((x) => x !== n);
+    if (!extras[p.code].length) delete extras[p.code];
+    if (fotosLocales[key]){ try { await idb.del(key); } catch (e) {} URL.revokeObjectURL(fotosLocales[key]); delete fotosLocales[key]; }
+    guardarCatLocal(); render(); pintarGaleria(p, 0); toast('Foto quitada');
   }
   function mostrarTabDet(tab){
     $('detTabs').querySelectorAll('button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
@@ -1321,7 +1482,7 @@ a.icard svg{stroke:var(--wa)}
   $('impForm').addEventListener('submit', (e) => {
     e.preventDefault(); if (!pendienteImp) return;
     const fotos = Array.from(conFoto);
-    cargarCatalogo({ c: pendienteImp.c, p: pendienteImp.p, f: fotos, d: descripciones(), fecha: hoy() });
+    cargarCatalogo({ c: pendienteImp.c, p: pendienteImp.p, f: fotos, d: descripciones(), x: extrasActuales(), i: Object.assign({}, info), fecha: hoy() });
     pendienteImp = null; guardarCatLocal(); cerrar('impSheet'); toast('Catálogo actualizado en este equipo');
   });
 
@@ -1369,12 +1530,13 @@ a.icard svg{stroke:var(--wa)}
           const srv = await (await fetch('catalogo.json' + v, { cache: 'no-store' })).json();
           const fs = new Set(srv.f || []);
           catOk = JSON.stringify(srv.p) === JSON.stringify(local.p) && JSON.stringify(srv.d || {}) === JSON.stringify(local.d || {})
+            && JSON.stringify(srv.x || {}) === JSON.stringify(local.x || {}) && JSON.stringify(srv.i || {}) === JSON.stringify(local.i || {})
             && local.f.every((c) => fs.has(c));
         } catch (e) { catOk = false; }
       }
       // limpiar solo lo que ya está publicado
       const listas = codes.filter((c) => faltan.indexOf(c) < 0);
-      for (const c of listas){ try { await idb.del(c); } catch (e) {} URL.revokeObjectURL(fotosLocales[c]); delete fotosLocales[c]; conFoto.add(c); }
+      for (const c of listas){ try { await idb.del(c); } catch (e) {} URL.revokeObjectURL(fotosLocales[c]); delete fotosLocales[c]; if (byCode[c]) conFoto.add(c); }
       if (catOk) ls.del('mass_cat_local');
       pintarPendientes(); render();
       if (!faltan.length && catOk){ cerrar('pubSheet'); toast('¡Verificado! Todo está publicado.'); return; }
@@ -1415,6 +1577,7 @@ a.icard svg{stroke:var(--wa)}
     $('userLbl').textContent = n;
     b.classList.toggle('on', !!sesion);
     b.setAttribute('aria-label', sesion ? 'Mi cuenta: ' + sesion.perfil.nombre : 'Ingresar o crear cuenta');
+    const mr = $('menuReg'); if (mr){ mr.hidden = !API; mr.textContent = sesion ? 'Mi cuenta' : 'Registrarse'; }
   }
   function mostrarMsg(id, txt){ const e = $(id); e.textContent = txt || ''; e.hidden = !txt; }
   function ocupado(btn, si, txt){
@@ -1657,6 +1820,89 @@ a.icard svg{stroke:var(--wa)}
     if (p) abrirDetalle(p); else toast('Ese producto ya no está en el catálogo.');
   }
   window.addEventListener('hashchange', revisarEnlaceProducto);
+
+  // ---------- páginas de la empresa ----------
+  const INFO = {
+    quienes: { t: 'Quiénes somos', def: [
+      'MASS FERRETERÍA es una ferretería de Santo Domingo de los Tsáchilas dedicada a ofrecer a hogares, maestros de obra, técnicos y empresas todo lo que necesitan para construir, reparar y mantener.',
+      'Contamos con más de 4.300 artículos: herramientas manuales y eléctricas, material eléctrico, tubería y accesorios PVC, pinturas, cerraduras, tornillería, abrasivos, artículos de limpieza y mucho más.',
+      '## Nuestra misión',
+      'Brindar productos de calidad a precios justos, con una atención cercana y asesoría honesta para que cada cliente encuentre la solución correcta para su trabajo.',
+      '## Nuestra visión',
+      'Ser la ferretería de confianza de Santo Domingo, reconocida por su variedad, su servicio rápido y la facilidad para comprar en el local o desde el celular.'
+    ].join('\n\n') },
+    valores: { t: 'Valores de la empresa', def: [
+      'Estos son los valores que guían nuestro trabajo todos los días:\n',
+      '- Honestidad: te recomendamos lo que realmente necesitas.',
+      '- Servicio: atención amable, rápida y con asesoría.',
+      '- Calidad: trabajamos con marcas reconocidas y productos garantizados.',
+      '- Compromiso: cumplimos con lo que ofrecemos, a tiempo.',
+      '- Responsabilidad: con nuestros clientes, colaboradores y la comunidad.'
+    ].join('\n') },
+    pagos: { t: 'Formas de pago', def: [
+      'Puedes pagar tu pedido de la forma que te resulte más cómoda:\n',
+      '- Efectivo en el local.',
+      '- Transferencia o depósito bancario.',
+      '- Tarjetas de crédito y débito.',
+      'Al recibir tu pedido por WhatsApp te confirmamos el valor final, la disponibilidad y los datos para el pago.',
+      '## Entregas',
+      'Puedes retirar tu pedido en el local o pedir envío a tu dirección en Santo Domingo.'
+    ].join('\n').replace(/\n(Al recibir|## Entregas|Puedes retirar)/g, '\n\n$1') },
+    contacto: { t: 'Contactos', def: [
+      '## Dirección',
+      'Av. León Rodrigo Pesantes y Kuwait, esquina — Santo Domingo de los Tsáchilas, Ecuador.',
+      '## WhatsApp y teléfono',
+      '0959920159',
+      '## Pedidos',
+      'Arma tu pedido en este catálogo y envíalo por WhatsApp. Te respondemos para confirmar precios, disponibilidad y forma de entrega.'
+    ].join('\n\n') }
+  };
+  let infoActual = null;
+  const textoInfo = (k) => (info[k] != null && info[k] !== '' ? info[k] : INFO[k].def);
+  function pintarTexto(cont, txt, k){
+    cont.replaceChildren();
+    const bloques = String(txt).split(/\n\s*\n/).map((b) => b.trim()).filter(Boolean);
+    bloques.forEach((b) => {
+      const lineas = b.split('\n');
+      if (lineas.every((l) => /^\s*-\s+/.test(l))){
+        const items = lineas.map((l) => l.replace(/^\s*-\s+/, ''));
+        if (k === 'valores' && items.every((x) => x.indexOf(':') > 0)){
+          const g = el('div', 'valores');
+          items.forEach((x) => { const i = x.indexOf(':'); const v = el('div', 'valor'); v.append(el('b', null, x.slice(0, i).trim()), el('span', null, x.slice(i + 1).trim())); g.appendChild(v); });
+          cont.appendChild(g); return;
+        }
+        const ul = el('ul'); items.forEach((x) => ul.appendChild(el('li', null, x))); cont.appendChild(ul); return;
+      }
+      lineas.forEach((l) => {
+        if (/^##\s+/.test(l)) cont.appendChild(el('h3', null, l.replace(/^##\s+/, '')));
+        else if (/^\s*-\s+/.test(l)){ const ul = cont.lastElementChild && cont.lastElementChild.tagName === 'UL' ? cont.lastElementChild : cont.appendChild(el('ul')); ul.appendChild(el('li', null, l.replace(/^\s*-\s+/, ''))); }
+        else cont.appendChild(el('p', null, l));
+      });
+    });
+  }
+  function abrirInfo(k){
+    infoActual = k;
+    $('infoTitle').textContent = INFO[k].t;
+    pintarTexto($('infoBody'), textoInfo(k), k);
+    $('infoContact').hidden = k !== 'contacto';
+    $('infoAdm').hidden = !admin; $('infoEdit').hidden = true; $('infoBody').hidden = false;
+    abrir('infoSheet');
+  }
+  document.querySelectorAll('.menu [data-info]').forEach((b) => b.addEventListener('click', () => abrirInfo(b.dataset.info)));
+  $('menuReg').addEventListener('click', () => { if (sesion) abrirCuenta(); else abrirAuth('reg'); });
+  $('infoShare').addEventListener('click', () => { cerrar('infoSheet'); compartirCatalogo(); });
+  $('infoEditBtn').addEventListener('click', () => {
+    $('infoTxt').value = textoInfo(infoActual);
+    $('infoEdit').hidden = false; $('infoBody').hidden = true; $('infoAdm').hidden = true; $('infoTxt').focus();
+  });
+  $('infoCancel').addEventListener('click', () => abrirInfo(infoActual));
+  $('infoReset').addEventListener('click', () => { $('infoTxt').value = INFO[infoActual].def; });
+  $('infoEdit').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const t = $('infoTxt').value.replace(/\r/g, '').trim();
+    if (!t || t === INFO[infoActual].def) delete info[infoActual]; else info[infoActual] = t;
+    guardarCatLocal(); abrirInfo(infoActual); toast('Página guardada. Recuerda «Publicar cambios».');
+  });
 
   // ---------- instalación ----------
   let evInstall = null;
