@@ -1967,7 +1967,13 @@ a.icard svg{stroke:var(--wa)}
   // ---------- inicio ----------
   const local = ls.get('mass_cat_local', null);
   fetch('catalogo.json', { cache: 'no-cache' }).then((r) => { if (!r.ok) throw 0; return r.json(); })
-    .then((d) => cargarCatalogo(local || d))
+    .then((d) => {
+      if (local){   // cambios pendientes en este equipo: conservar también las fotos publicadas desde otro lugar
+        local.f = Array.from(new Set([...(local.f || []), ...(d.f || [])]));
+        local.x = Object.assign({}, d.x || {}, local.x || {});
+      }
+      cargarCatalogo(local || d);
+    })
     .catch(() => { if (local) cargarCatalogo(local); else $('nShown').textContent = 'No se pudo cargar el catálogo. Revisa tu conexión.'; })
     .then(() => { if (sessionStorage.getItem('mass_admin') === '1' && ls.get('mass_pin', null)) entrarAdmin(); revisarEnlaceNota(); revisarEnlaceProducto(); });
 })();
