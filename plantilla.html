@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Fichas de producto MASS</title>
+<meta name="theme-color" content="#1A1814">
+<link rel="icon" href="catalogo-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* Layout: panel de datos a la izquierda, vista previa cuadrada a la derecha (en celular, una columna) */
+:root{
+  --bg:#FBFAF6; --surface:#FFFFFF; --line:#E7E2D6; --fg:#1A1814; --muted:#5E584C;
+  --gold:#C99A2E; --gold-ink:#8A6510; --gold-soft:#F3E9CF; --dark:#1A1814; --ok-bg:#E1EFDF; --ok-fg:#25562A;
+  --font-display:'Archivo',system-ui,sans-serif; --font-body:'Source Sans 3',system-ui,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#15130F; --surface:#1F1C17; --line:#38332A; --fg:#F2EEE5; --muted:#B4AC9C; --gold-ink:#E2BE62; --gold-soft:#3A3020;
+  --ok-bg:#1F3622; --ok-fg:#A9D8A8; color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:16px;line-height:1.45}
+[hidden]{display:none!important}
+header{background:var(--dark);color:#F3E9CF;padding:12px max(16px,env(safe-area-inset-left,0px)) 12px max(16px,env(safe-area-inset-right,0px));padding-top:calc(12px + env(safe-area-inset-top,0px))}
+header .in{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:12px}
+header img{height:42px}
+header h1{margin:0;font-family:var(--font-display);font-size:19px;line-height:1.1}
+header small{display:block;color:#CDBF9C;font-size:13px;font-weight:600}
+header a{margin-left:auto;color:#F3E9CF;font-weight:700;text-decoration:none;border:1.5px solid #3A352C;border-radius:10px;padding:8px 12px;white-space:nowrap}
+main{max-width:1180px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px));display:grid;grid-template-columns:minmax(0,400px) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:860px){main{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.panel h2{margin:0;font-family:var(--font-display);font-size:17px}
+label{display:flex;flex-direction:column;gap:5px;font-weight:700;font-size:14px}
+input[type=text],input[type=number],textarea,select{border:1.5px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg);font:inherit;font-weight:400;padding:10px 12px;min-height:44px;width:100%}
+textarea{min-height:70px;resize:vertical}
+input:focus,textarea:focus,select:focus,.btn:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+.hint{font-size:13px;color:var(--muted);font-weight:400}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.check{flex-direction:row;align-items:center;gap:8px;font-weight:600}
+.check input{width:20px;height:20px;accent-color:var(--gold)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:46px;padding:0 14px;border-radius:10px;font:inherit;font-weight:800;font-size:15px;cursor:pointer;border:1.5px solid var(--fg);background:var(--surface);color:var(--fg);position:relative;text-align:center}
+.btn.primary{background:var(--gold);border-color:var(--gold);color:#1A1814}
+.btn.dark{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+.btn input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.btns{display:flex;flex-direction:column;gap:8px}
+.estilos{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.estilos button{border:2px solid var(--line);border-radius:12px;padding:8px;background:var(--bg);color:var(--fg);font:inherit;font-weight:700;font-size:14px;cursor:pointer;display:flex;flex-direction:column;gap:6px;align-items:center}
+.estilos button[aria-pressed="true"]{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,154,46,.25)}
+.estilos i{display:block;width:100%;height:26px;border-radius:6px}
+.prev{position:sticky;top:16px;display:flex;flex-direction:column;gap:10px}
+.lienzo{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px}
+canvas{display:block;width:100%;max-width:100%;height:auto;aspect-ratio:1/1;border-radius:8px;touch-action:none;cursor:grab;background:#fff}
+.zoom{display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px}
+.zoom input{flex:1;accent-color:var(--gold)}
+.ok{background:var(--ok-bg);color:var(--ok-fg);border-radius:10px;padding:10px 12px;font-weight:700;font-size:14px}
+.found{font-size:13px;color:var(--ok-fg);font-weight:700}
+</style>
+</head>
+<body>
+<header><div class="in">
+  <img src="logo_mass.png" alt="Logo MASS FERRETERÍA">
+  <div><h1>Fichas de producto</h1><small>MASS FERRETERÍA</small></div>
+  <a href="./">Volver al catálogo</a>
+</div></header>
+
+<main>
+  <form class="panel" id="f" novalidate>
+    <h2>1. Datos del producto</h2>
+    <label for="cod">Código del producto
+      <input type="text" id="cod" autocomplete="off" placeholder="Ej.: 3164">
+      <span class="hint" id="codHint">Si el código existe en el catálogo, se llenan solos el nombre, la categoría y el precio.</span>
+    </label>
+    <label for="tit">Título o categoría<input type="text" id="tit" maxlength="60" placeholder="CARBONES PARA HERRAMIENTAS"></label>
+    <label for="nom">Nombre del producto<textarea id="nom" maxlength="120" placeholder="CARBÓN RC2 12 X 8 X 5"></textarea></label>
+    <label for="det">Detalle (opcional)<input type="text" id="det" maxlength="70" placeholder="Ej.: Para amoladoras y taladros · Par"></label>
+    <div class="row">
+      <label for="pre">Precio (opcional)<input type="number" id="pre" min="0" step="0.01" inputmode="decimal" placeholder="0.00"></label>
+      <label for="marca">Marca (opcional)<input type="text" id="marca" maxlength="24"></label>
+    </div>
+    <label class="check"><input type="checkbox" id="verPre" checked> Mostrar el precio</label>
+    <label class="check"><input type="checkbox" id="verWa" checked> Mostrar WhatsApp 0959920159</label>
+
+    <h2>2. Foto</h2>
+    <label class="btn primary" id="fotoBtn">Subir foto del producto<input type="file" id="foto" accept="image/*"></label>
+    <span class="hint">Arrastra la foto en la vista previa para moverla y usa el zoom para acomodarla.</span>
+
+    <h2>3. Estilo</h2>
+    <div class="estilos" id="estilos">
+      <button type="button" data-e="oscuro" aria-pressed="true"><i style="background:linear-gradient(#1A1814 60%,#C99A2E 60%)"></i>Negro y dorado</button>
+      <button type="button" data-e="claro" aria-pressed="false"><i style="background:linear-gradient(#FFFFFF 60%,#C99A2E 60%);border:1px solid #E7E2D6"></i>Blanco y dorado</button>
+    </div>
+  </form>
+
+  <section class="prev" aria-label="Vista previa">
+    <div class="lienzo"><canvas id="c" width="1080" height="1080" aria-label="Vista previa de la ficha"></canvas></div>
+    <div class="zoom"><span>Zoom</span><input type="range" id="zoom" min="50" max="250" value="100"><button type="button" class="btn" id="centrar" style="min-height:36px;padding:0 10px;font-size:13px">Centrar</button></div>
+    <div class="btns">
+      <button type="button" class="btn dark" id="descargar">Descargar imagen (JPG)</button>
+      <button type="button" class="btn primary" id="comoPrincipal">Usar como foto principal en el catálogo</button>
+      <button type="button" class="btn" id="comoExtra">Agregar como foto adicional en el catálogo</button>
+      <button type="button" class="btn" id="nueva">Nueva ficha (mantener título y estilo)</button>
+    </div>
+    <div class="ok" id="msg" hidden></div>
+  </section>
+</main>
+
+<script>
+(function(){
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const S = 1080, cv = $('c'), cx = cv.getContext('2d');
+  const ls = { get(k, d){ try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+               set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+  let estilo = ls.get('mass_plantilla_estilo', 'oscuro');
+  let foto = null, zoom = 1, ox = 0, oy = 0;
+  let catalogo = null, byCode = {};
+  const logo = new Image(); logo.src = 'logo_mass.png'; logo.onload = dibujar;
+
+  fetch('catalogo.json', { cache: 'no-cache' }).then((r) => r.json()).then((d) => {
+    catalogo = d; d.p.forEach((p) => { byCode[String(p[0]).toUpperCase()] = p; });
+    const t = ls.get('mass_plantilla_titulo', ''); if (t && !$('tit').value) $('tit').value = t;
+    dibujar();
+  }).catch(() => {});
+
+  // ---------- autocompletar por código ----------
+  $('cod').addEventListener('input', () => {
+    const p = byCode[$('cod').value.trim().toUpperCase()];
+    if (p){
+      $('nom').value = p[1]; $('pre').value = p[3] > 0 ? Number(p[3]).toFixed(2) : '';
+      $('marca').value = p[2] || '';
+      if (catalogo && catalogo.c[p[4]]) $('tit').value = catalogo.c[p[4]].toUpperCase();
+      $('codHint').textContent = 'Encontrado en el catálogo: datos cargados. Puedes cambiarlos.'; $('codHint').className = 'found';
+    } else { $('codHint').textContent = 'Si el código existe en el catálogo, se llenan solos el nombre, la categoría y el precio.'; $('codHint').className = 'hint'; }
+    dibujar();
+  });
+  ['tit', 'nom', 'det', 'pre', 'marca', 'verPre', 'verWa'].forEach((id) => $(id).addEventListener('input', dibujar));
+  $('tit').addEventListener('change', () => ls.set('mass_plantilla_titulo', $('tit').value));
+
+  // ---------- estilos ----------
+  function pintarEstilos(){ document.querySelectorAll('#estilos button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.e === estilo))); }
+  document.querySelectorAll('#estilos button').forEach((b) => b.addEventListener('click', () => { estilo = b.dataset.e; ls.set('mass_plantilla_estilo', estilo); pintarEstilos(); dibujar(); }));
+  pintarEstilos();
+
+  // ---------- foto ----------
+  $('foto').addEventListener('change', () => {
+    const f = $('foto').files[0]; $('foto').value = ''; if (!f) return;
+    const url = URL.createObjectURL(f); const im = new Image();
+    im.onload = () => { foto = im; zoom = 1; ox = oy = 0; $('zoom').value = 100; $('fotoBtn').firstChild.textContent = 'Cambiar foto'; dibujar(); };
+    im.src = url;
+  });
+  $('zoom').addEventListener('input', () => { zoom = $('zoom').value / 100; dibujar(); });
+  $('centrar').addEventListener('click', () => { ox = oy = 0; zoom = 1; $('zoom').value = 100; dibujar(); });
+  let drag = null;
+  cv.addEventListener('pointerdown', (e) => { if (!foto) return; drag = { x: e.clientX, y: e.clientY, ox, oy }; cv.setPointerCapture(e.pointerId); cv.style.cursor = 'grabbing'; });
+  cv.addEventListener('pointermove', (e) => { if (!drag) return; const k = S / cv.getBoundingClientRect().width; ox = drag.ox + (e.clientX - drag.x) * k; oy = drag.oy + (e.clientY - drag.y) * k; dibujar(); });
+  ['pointerup', 'pointercancel'].forEach((t) => cv.addEventListener(t, () => { drag = null; cv.style.cursor = 'grab'; }));
+  cv.addEventListener('wheel', (e) => { if (!foto) return; e.preventDefault(); zoom = Math.min(2.5, Math.max(.5, zoom - e.deltaY / 800)); $('zoom').value = Math.round(zoom * 100); dibujar(); }, { passive: false });
+
+  // ---------- dibujo ----------
+  function rr(x, y, w, h, r){ cx.beginPath(); cx.moveTo(x + r, y); cx.arcTo(x + w, y, x + w, y + h, r); cx.arcTo(x + w, y + h, x, y + h, r); cx.arcTo(x, y + h, x, y, r); cx.arcTo(x, y, x + w, y, r); cx.closePath(); }
+  function lineas(txt, maxW, font){ cx.font = font; const out = []; let cur = '';
+    String(txt).split(/\s+/).filter(Boolean).forEach((w) => { const t = cur ? cur + ' ' + w : w; if (cx.measureText(t).width <= maxW) cur = t; else { if (cur) out.push(cur); cur = w; } });
+    if (cur) out.push(cur); return out; }
+  function ajustar(txt, maxW, maxLines, base, min, peso, fam){
+    for (let s = base; s >= min; s -= 2){ const f = peso + ' ' + s + 'px ' + fam; const l = lineas(txt, maxW, f); if (l.length <= maxLines) return { l, s, f }; }
+    const f = peso + ' ' + min + 'px ' + fam; return { l: lineas(txt, maxW, f).slice(0, maxLines), s: min, f };
+  }
+  const D = "Archivo, system-ui, sans-serif", B = "'Source Sans 3', system-ui, sans-serif";
+  function dibujar(){
+    const osc = estilo === 'oscuro';
+    const C = osc ? { fondo: '#1A1814', tit: '#E2BE62', nom: '#FFFFFF', sub: '#CDBF9C', panel: '#FFFFFF', pie: '#C99A2E', pieTxt: '#1A1814' }
+                  : { fondo: '#FFFFFF', tit: '#8A6510', nom: '#1A1814', sub: '#5E584C', panel: '#F7F4EC', pie: '#1A1814', pieTxt: '#F3E9CF' };
+    cx.clearRect(0, 0, S, S);
+    cx.fillStyle = C.fondo; cx.fillRect(0, 0, S, S);
+    // marco dorado fino
+    cx.strokeStyle = '#C99A2E'; cx.lineWidth = 6; rr(18, 18, S - 36, S - 36, 28); cx.stroke();
+    // cabecera: logo + marca
+    const lh = 150, lw = logo.naturalWidth ? lh * logo.naturalWidth / logo.naturalHeight : 130;
+    if (logo.complete && logo.naturalWidth) cx.drawImage(logo, 64, 52, lw, lh);
+    cx.textBaseline = 'alphabetic'; cx.textAlign = 'left';
+    cx.fillStyle = C.nom; cx.font = '800 64px ' + D; cx.fillText('MASS FERRETERÍA', 64 + lw + 28, 128);
+    cx.fillStyle = C.sub; cx.font = '600 28px ' + B; cx.fillText('Más que una ferretería, tu aliado en cada proyecto', 64 + lw + 30, 172);
+    // título / categoría
+    let y = 250;
+    const tit = $('tit').value.trim().toUpperCase();
+    cx.fillStyle = '#C99A2E'; cx.fillRect(64, y - 6, 8, 44);
+    const t = ajustar(tit || 'TÍTULO O CATEGORÍA', S - 160, 1, 40, 26, '800', D);
+    cx.fillStyle = tit ? C.tit : 'rgba(150,140,120,.6)'; cx.font = t.f; cx.fillText(t.l[0] || '', 90, y + 30);
+    y += 70;
+    // nombre del producto
+    const nom = $('nom').value.trim().toUpperCase();
+    const n = ajustar(nom || 'NOMBRE DEL PRODUCTO', S - 128, 2, 58, 34, '800', D);
+    cx.fillStyle = nom ? C.nom : 'rgba(150,140,120,.6)'; cx.font = n.f;
+    n.l.forEach((l, i) => cx.fillText(l, 64, y + n.s + i * n.s * 1.12));
+    y += n.s * 1.12 * n.l.length + 6;
+    const det = $('det').value.trim(), marca = $('marca').value.trim().toUpperCase();
+    const sub = [marca, det].filter(Boolean).join('  ·  ');
+    if (sub){ cx.fillStyle = C.sub; cx.font = '600 30px ' + B; cx.fillText(lineas(sub, S - 128, '600 30px ' + B)[0] || '', 64, y + 30); y += 44; }
+    // panel de foto
+    const pieH = 120, px = 64, py = y + 14, pw = S - 128, ph = S - 64 - pieH - 18 - py;
+    cx.save(); rr(px, py, pw, ph, 24); cx.fillStyle = C.panel; cx.fill(); cx.clip();
+    if (foto){
+      const k = Math.min(pw * .9 / foto.width, ph * .9 / foto.height) * zoom;
+      const w = foto.width * k, h = foto.height * k;
+      cx.drawImage(foto, px + (pw - w) / 2 + ox, py + (ph - h) / 2 + oy, w, h);
+    } else {
+      cx.fillStyle = 'rgba(150,140,120,.55)'; cx.font = '700 36px ' + B; cx.textAlign = 'center';
+      cx.fillText('Sube la foto del producto', px + pw / 2, py + ph / 2); cx.textAlign = 'left';
+    }
+    cx.restore();
+    // pie
+    const fy = S - 64 - pieH;
+    rr(64, fy, S - 128, pieH, 22); cx.fillStyle = C.pie; cx.fill();
+    cx.fillStyle = C.pieTxt; cx.textBaseline = 'middle';
+    const cod = $('cod').value.trim();
+    let xL = 96;
+    if (cod){ cx.font = '700 26px ' + B; cx.fillText('CÓDIGO', xL, fy + 40); cx.font = '800 40px ' + D; cx.fillText(cod.toUpperCase(), xL, fy + 82); xL += Math.max(cx.measureText(cod.toUpperCase()).width, 120) + 50; }
+    if ($('verWa').checked){ cx.font = '700 26px ' + B; cx.fillText('PEDIDOS POR WHATSAPP', xL, fy + 40); cx.font = '800 40px ' + D; cx.fillText('0959920159', xL, fy + 82); }
+    const pre = parseFloat(String($('pre').value).replace(',', '.'));
+    if ($('verPre').checked && pre > 0){
+      cx.textAlign = 'right'; cx.font = '800 72px ' + D; cx.fillText('$' + pre.toFixed(2), S - 96, fy + pieH / 2 + 4); cx.textAlign = 'left';
+    }
+    cx.textBaseline = 'alphabetic';
+  }
+  if (document.fonts && document.fonts.load){
+    Promise.all([document.fonts.load('800 60px Archivo'), document.fonts.load('600 30px "Source Sans 3"'), document.fonts.load('700 30px "Source Sans 3"')]).then(dibujar).catch(dibujar);
+  }
+  dibujar();
+
+  // ---------- salida ----------
+  function aviso(t){ const m = $('msg'); m.textContent = t; m.hidden = false; clearTimeout(aviso._t); aviso._t = setTimeout(() => { m.hidden = true; }, 6000); }
+  const nombreArchivo = () => ($('cod').value.trim() || 'ficha-mass').replace(/[^A-Za-z0-9_-]/g, '');
+  const blobJPG = () => new Promise((res) => cv.toBlob(res, 'image/jpeg', 0.88));
+  $('descargar').addEventListener('click', async () => {
+    if (!foto){ aviso('Primero sube la foto del producto.'); return; }
+    const b = await blobJPG(); const a = document.createElement('a');
+    a.href = URL.createObjectURL(b); a.download = nombreArchivo() + '.jpg'; document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+    aviso('Imagen descargada: ' + nombreArchivo() + '.jpg');
+  });
+  // Guarda la imagen en el mismo almacenamiento que usa el catálogo para las fotos pendientes de publicar
+  function idbPut(key, blob){
+    return new Promise((res, rej) => {
+      const r = indexedDB.open('mass_catalogo', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('fotos');
+      r.onsuccess = () => { const tx = r.result.transaction('fotos', 'readwrite'); tx.objectStore('fotos').put(blob, key); tx.oncomplete = res; tx.onerror = () => rej(tx.error); };
+      r.onerror = () => rej(r.error);
+    });
+  }
+  function validarCodigo(){
+    const code = $('cod').value.trim();
+    const p = byCode[code.toUpperCase()];
+    if (!p){ aviso('Escribe un código que exista en el catálogo para guardarla ahí.'); return null; }
+    if (!foto){ aviso('Primero sube la foto del producto.'); return null; }
+    return String(p[0]);
+  }
+  $('comoPrincipal').addEventListener('click', async () => {
+    const code = validarCodigo(); if (!code) return;
+    try { await idbPut(code, await blobJPG()); aviso('Guardada como foto principal del código ' + code + '. Abre el catálogo en modo administrador y usa «Publicar cambios».'); }
+    catch (e) { aviso('No se pudo guardar en el catálogo. Descarga la imagen y súbela con «+ Foto».'); }
+  });
+  $('comoExtra').addEventListener('click', async () => {
+    const code = validarCodigo(); if (!code) return;
+    try {
+      const local = ls.get('mass_cat_local', null) || JSON.parse(JSON.stringify(catalogo));
+      if (!local.f) local.f = catalogo.f || [];
+      if (local.f.indexOf(code) < 0){ await idbPut(code, await blobJPG()); aviso('Ese producto no tenía foto: se guardó como foto principal del código ' + code + '. Publica los cambios desde el catálogo.'); return; }
+      local.x = Object.assign({}, catalogo.x || {}, local.x || {});
+      const l = local.x[code] || (local.x[code] = []);
+      const n = Math.max(1, ...l) + 1; l.push(n);
+      await idbPut(code + '_' + n, await blobJPG());
+      ls.set('mass_cat_local', local);
+      aviso('Agregada como foto ' + n + ' del código ' + code + '. Abre el catálogo en modo administrador y usa «Publicar cambios».');
+    } catch (e) { aviso('No se pudo guardar en el catálogo. Descarga la imagen y súbela desde la ficha del producto.'); }
+  });
+  $('nueva').addEventListener('click', () => {
+    ['cod', 'nom', 'det', 'pre', 'marca'].forEach((id) => { $(id).value = ''; });
+    foto = null; zoom = 1; ox = oy = 0; $('zoom').value = 100; $('fotoBtn').firstChild.textContent = 'Subir foto del producto';
+    $('codHint').className = 'hint'; dibujar(); $('cod').focus();
+  });
+
+  // ejemplo inicial para ver el diseño
+  if (!$('tit').value){ $('tit').value = 'CARBONES PARA HERRAMIENTAS'; $('nom').value = 'CARBÓN RC2 12 X 8 X 5'; $('det').value = 'Repuesto para herramientas eléctricas · Par'; $('verPre').checked = true; }
+  dibujar();
+})();
+</script>
+</body>
+</html>
