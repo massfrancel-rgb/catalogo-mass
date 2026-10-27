@@ -253,6 +253,8 @@ a.icard svg{stroke:var(--wa)}
 .n-total{background:#C99A2E;color:#1A1814;border-radius:10px;padding:8px 14px;display:flex;gap:24px;align-items:baseline;font-family:var(--font-display);font-weight:800;font-size:18px;margin-left:auto}
 .n-nota{margin:0;font-size:14px}
 .install{background:var(--gold-soft);border-bottom:1px solid var(--line)}
+.stock{white-space:nowrap;font-size:11px;font-weight:800;color:var(--ok-fg);background:var(--ok-bg);border-radius:6px;padding:2px 6px;align-self:flex-start;margin-top:3px;font-variant-numeric:tabular-nums}
+.stock.cero{color:var(--warn-fg);background:var(--warn-bg)}
 /* ---------- galería ---------- */
 .panel > *{flex-shrink:0}
 .det-img{position:relative;height:min(46vh,560px);aspect-ratio:auto}
@@ -388,6 +390,7 @@ a.icard svg{stroke:var(--wa)}
   <div class="wrap">
     <b>Modo administrador</b>
     <span class="chip" id="admPend">Sin cambios por publicar</span>
+    <label class="chip" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;padding:6px 12px"><input type="checkbox" id="optStock" style="width:18px;height:18px;accent-color:var(--gold)"> Clientes ven el stock</label>
     <span class="sp"></span>
     <label class="btn primary">Actualizar desde Anfibus<input id="importFile" type="file" accept=".xls,.xlsx"></label>
     <button type="button" class="btn" id="clientesBtn" hidden>Clientes</button>
@@ -521,6 +524,7 @@ a.icard svg{stroke:var(--wa)}
     <label for="edPrecio">Precio de venta (PVP) en dólares<input id="edPrecio" type="number" min="0" step="0.01" inputmode="decimal"></label>
     <label for="edDesc">Descripción del producto<textarea id="edDesc" maxlength="2000" placeholder="Para qué sirve, usos, ventajas…" style="min-height:110px"></textarea></label>
     <label for="edEsp">Especificaciones <span class="hint">(una por línea, así: Medida: 23 x 28 cm)</span><textarea id="edEsp" maxlength="1500" placeholder="Marca: Stanley&#10;Grano: 120&#10;Uso: metal y madera&#10;Medida: 23 x 28 cm" style="min-height:110px"></textarea></label>
+    <label for="edStock">Unidades en stock<input id="edStock" type="number" min="0" step="any" inputmode="decimal"><span class="hint">Se actualiza solo cada vez que cargas el Excel de Anfibus.</span></label>
     <label style="flex-direction:row;align-items:center;gap:10px"><input type="checkbox" id="edAgot" style="min-height:auto;width:20px;height:20px;accent-color:var(--gold)"> Sin stock (agotado)</label>
     <div class="btns">
       <button type="button" class="btn" data-close>Cancelar</button>
@@ -772,7 +776,7 @@ a.icard svg{stroke:var(--wa)}
     extras = JSON.parse(JSON.stringify(d.x || {}));
     info = Object.assign({}, d.i || {});
     fechaCat = d.fecha || '';
-    prods = (d.p || []).map((x) => ({ code: String(x[0]), nombre: x[1], marca: x[2] || '', pvp: Number(x[3]) || 0, ci: x[4], agotado: x[5] === 1 }));
+    prods = (d.p || []).map((x) => ({ code: String(x[0]), nombre: x[1], marca: x[2] || '', pvp: Number(x[3]) || 0, ci: x[4], agotado: x[5] === 1, stock: x[6] != null ? Number(x[6]) : null }));
     const dd = d.d || {};
     prods.forEach((p) => { const x = dd[p.code]; p.desc = x ? x[0] || '' : ''; p.esp = x ? x[1] || '' : ''; p.buscar = buscarDe(p); });
     byCode = {}; prods.forEach((p) => { byCode[p.code] = p; });
@@ -789,7 +793,7 @@ a.icard svg{stroke:var(--wa)}
   function descripciones(){ const o = {}; prods.forEach((p) => { if (p.desc || p.esp) o[p.code] = [p.desc || '', p.esp || '']; }); return o; }
   function extrasActuales(){ const o = {}; Object.keys(extras).forEach((c) => { if (byCode[c] && extras[c].length) o[c] = extras[c].slice(); }); return o; }
   function catalogoActual(){
-    return { c: cats, p: prods.map((p) => [p.code, p.nombre, p.marca, p.pvp, p.ci, p.agotado ? 1 : 0]), d: descripciones(), x: extrasActuales(), i: Object.assign({}, info),
+    return { c: cats, p: prods.map((p) => { const a = [p.code, p.nombre, p.marca, p.pvp, p.ci, p.agotado ? 1 : 0]; if (p.stock != null) a.push(p.stock); return a; }), d: descripciones(), x: extrasActuales(), i: Object.assign({}, info),
       f: Array.from(new Set([...conFoto, ...Object.keys(fotosLocales)])).filter((c) => byCode[c]).sort(), fecha: hoy() };
   }
   function hoy(){ const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
@@ -801,6 +805,8 @@ a.icard svg{stroke:var(--wa)}
     return l;
   }
   const fotoUrl = (p) => fotosLocales[p.code] || (conFoto.has(p.code) ? 'fotos/' + encodeURIComponent(p.code) + '.jpg' : null);
+  const fmtStock = (n) => Number(n).toLocaleString('es-EC', { maximumFractionDigits: 2 });
+  const verStock = (p) => p.stock != null && (admin || !info.ocultarStock);
   const iniciales = (p) => (p.marca || p.nombre || '?').replace(/[^A-Za-zÁÉÍÓÚÑ0-9 ]/g, '').trim().slice(0, 2).toUpperCase() || 'MF';
 
   function lista(){
@@ -884,6 +890,7 @@ a.icard svg{stroke:var(--wa)}
     b.appendChild(meta);
     const nm = el('div', 'nombre', p.nombre); nm.addEventListener('click', () => abrirDetalle(p)); b.appendChild(nm);
     b.appendChild(el('div', 'precio' + (p.pvp > 0 ? '' : ' cons'), p.pvp > 0 ? money(p.pvp) : 'Consultar'));
+    if (verStock(p)) b.appendChild(el('div', 'stock' + (p.stock > 0 ? '' : ' cero'), 'Stock: ' + fmtStock(Math.max(0, p.stock))));
     art.appendChild(b);
     const act = el('div', 'act');
     const refrescar = () => accionesCliente(p, act, refrescar);
@@ -958,7 +965,7 @@ a.icard svg{stroke:var(--wa)}
     pintarGaleria(p, 0);
     $('detNombre').textContent = p.nombre;
     $('detPrecio').textContent = p.pvp > 0 ? money(p.pvp) : 'Precio a consultar';
-    $('detPill').replaceChildren(p.agotado ? el('span', 'pill warn', 'Agotado') : el('span', 'pill ok', 'Disponible'));
+    $('detPill').replaceChildren(p.agotado ? el('span', 'pill warn', 'Agotado') : el('span', 'pill ok', verStock(p) && p.stock > 0 ? 'Disponible · ' + fmtStock(p.stock) + (p.stock === 1 ? ' unidad' : ' unidades') : 'Disponible'));
     const act = $('detAct'); act.replaceChildren();
     const cli = el('div', 'btns'); cli.style.flex = '1 1 100%'; act.appendChild(cli);
     const r = () => { accionesCliente(p, cli, r); render(); }; accionesCliente(p, cli, r);
@@ -1397,7 +1404,12 @@ a.icard svg{stroke:var(--wa)}
     pinAdmin = v;
     cerrar('pinSheet'); entrarAdmin();
   });
+  $('optStock').addEventListener('change', () => {
+    if ($('optStock').checked) delete info.ocultarStock; else info.ocultarStock = 1;
+    guardarCatLocal(); toast($('optStock').checked ? 'Los clientes verán las unidades en stock' : 'El stock solo lo verás tú (modo administrador)');
+  });
   async function entrarAdmin(){
+    $('optStock').checked = !info.ocultarStock;
     admin = true; sessionStorage.setItem('mass_admin', '1');
     $('adminBar').hidden = false; $('tgSinFoto').hidden = false; $('clientesBtn').hidden = !API;
     await cargarFotosLocales(); pintarPendientes(); render();
@@ -1457,10 +1469,12 @@ a.icard svg{stroke:var(--wa)}
     $('edCod').textContent = 'Código ' + p.code + (p.marca ? ' · ' + p.marca : '');
     $('edNombre').value = p.nombre; $('edPrecio').value = p.pvp > 0 ? p.pvp.toFixed(2) : '';
     $('edAgot').checked = p.agotado;
+    $('edStock').value = p.stock != null ? String(p.stock) : '';
     $('edDesc').value = p.desc || ''; $('edEsp').value = p.esp || '';
     if (!$('detSheet').hidden) cerrar('detSheet');
     abrir('edSheet');
   }
+  $('edStock').addEventListener('input', () => { const n = parseFloat(String($('edStock').value).replace(',', '.')); if (isFinite(n)) $('edAgot').checked = n <= 0; });
   $('edForm').addEventListener('submit', (e) => {
     e.preventDefault(); if (!editando) return;
     const n = $('edNombre').value.replace(/\s+/g, ' ').trim();
@@ -1468,6 +1482,8 @@ a.icard svg{stroke:var(--wa)}
     if (!n){ toast('El nombre no puede quedar vacío'); return; }
     editando.nombre = n; editando.pvp = isFinite(pr) && pr >= 0 ? Math.round(pr * 100) / 100 : 0;
     editando.agotado = $('edAgot').checked;
+    const sv = String($('edStock').value).replace(',', '.').trim();
+    if (sv !== ''){ const n = parseFloat(sv); if (isFinite(n) && n >= 0) editando.stock = Math.round(n * 100) / 100; }
     editando.desc = $('edDesc').value.trim(); editando.esp = $('edEsp').value.replace(/\n{2,}/g, '\n').trim();
     editando.buscar = buscarDe(editando);
     guardarCatLocal(); cerrar('edSheet'); render(); toast('Producto actualizado');
@@ -1503,7 +1519,7 @@ a.icard svg{stroke:var(--wa)}
       if (marca === 'S.M.' || marca.toUpperCase() === 'MASS FERRETERIA') marca = '';
       const code = c0.replace(/\.0$/, '');
       const stock = iStock >= 0 ? num(r[iStock]) : 1;
-      p.push([code, desc, marca, Math.round(num(r[iPvp]) * 100) / 100, cat, stock > 0 ? 0 : 1]);
+      const fila = [code, desc, marca, Math.round(num(r[iPvp]) * 100) / 100, cat, stock > 0 ? 0 : 1]; if (iStock >= 0) fila.push(Math.round(stock * 100) / 100); p.push(fila);
     }
     if (!p.length) throw new Error('No encontré productos en el archivo.');
     return { c, p };
