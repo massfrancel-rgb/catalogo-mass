@@ -253,6 +253,16 @@ a.icard svg{stroke:var(--wa)}
 .n-total{background:#C99A2E;color:#1A1814;border-radius:10px;padding:8px 14px;display:flex;gap:24px;align-items:baseline;font-family:var(--font-display);font-weight:800;font-size:18px;margin-left:auto}
 .n-nota{margin:0;font-size:14px}
 .install{background:var(--gold-soft);border-bottom:1px solid var(--line)}
+.rap-prod{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;padding:12px;border-radius:12px;background:var(--gold-soft)}
+.rap-prod b{flex:1 1 100%;font-family:var(--font-display);font-size:19px;line-height:1.25}
+.dropzone{border:3px dashed var(--gold);border-radius:14px;min-height:240px;display:flex;align-items:center;justify-content:center;text-align:center;padding:16px;background:var(--bg);cursor:copy}
+.dropzone:focus,.dropzone.over{outline:none;background:var(--gold-soft);border-style:solid}
+.dropzone #rapTxt{display:flex;flex-direction:column;gap:8px;max-width:42ch}
+.dropzone #rapTxt > b{font-size:19px}
+.dropzone #rapTxt span{color:var(--muted);font-size:14px}
+.dropzone img{max-height:300px;max-width:100%;object-fit:contain;background:#fff;border-radius:10px}
+.lote-ok{color:var(--ok-fg);background:var(--ok-bg);border-radius:10px;padding:10px 12px;font-weight:700}
+.lote-mal{color:var(--warn-fg);background:var(--warn-bg);border-radius:10px;padding:10px 12px;font-size:14px;overflow-wrap:anywhere}
 .tgsel{height:36px;padding:0 10px;border-radius:99px;border:1.5px solid var(--line);background:var(--surface);color:var(--fg);font:inherit;font-weight:700;font-size:14px;cursor:pointer}
 .tgsel.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}
 .stock{white-space:nowrap;font-size:11px;font-weight:800;color:var(--ok-fg);background:var(--ok-bg);border-radius:6px;padding:2px 6px;align-self:flex-start;margin-top:3px;font-variant-numeric:tabular-nums}
@@ -394,6 +404,8 @@ a.icard svg{stroke:var(--wa)}
     <span class="chip" id="admPend">Sin cambios por publicar</span>
     <label class="chip" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;padding:6px 12px"><input type="checkbox" id="optStock" style="width:18px;height:18px;accent-color:var(--gold)"> Clientes ven el stock</label>
     <span class="sp"></span>
+    <button type="button" class="btn primary" id="rapidaBtn">⚡ Fotos rápidas</button>
+    <label class="btn">Subir fotos en lote<input type="file" id="loteFile" accept="image/*" multiple></label>
     <a class="btn" href="plantilla.html" target="_blank" rel="noopener">Crear ficha</a>
     <label class="btn primary">Actualizar desde Anfibus<input id="importFile" type="file" accept=".xls,.xlsx"></label>
     <button type="button" class="btn" id="clientesBtn" hidden>Clientes</button>
@@ -712,6 +724,40 @@ a.icard svg{stroke:var(--wa)}
         <button type="submit" class="btn primary grow">Guardar</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- fotos rápidas -->
+<div class="sheet" id="rapSheet" hidden>
+  <div class="panel ancho" role="dialog" aria-modal="true" aria-labelledby="rapTitle">
+    <div class="phead"><h2 id="rapTitle">Fotos rápidas</h2><span class="chip" id="rapCont"></span><button type="button" class="x" data-close aria-label="Cerrar">✕</button></div>
+    <div class="rap-prod">
+      <span class="marca" id="rapMarca"></span> <span class="cod" id="rapCod"></span>
+      <b id="rapNom"></b>
+    </div>
+    <div class="btns">
+      <a class="btn wa grow" id="rapGoogle" target="rapbusca" rel="noopener">🔍 Buscar en Google Imágenes</a>
+      <button type="button" class="btn quiet" id="rapCopiar">Copiar nombre</button>
+    </div>
+    <div class="dropzone" id="rapZona" tabindex="0">
+      <img id="rapPrev" alt="" hidden>
+      <div id="rapTxt"><b>Pega aquí la imagen (Ctrl + V)</b><span>En Google: clic derecho sobre la imagen → <b>Copiar imagen</b>. Vuelve aquí y presiona Ctrl + V. También puedes arrastrar un archivo.</span></div>
+    </div>
+    <div class="btns">
+      <button type="button" class="btn quiet" id="rapAnt">‹ Anterior</button>
+      <label class="btn grow">Elegir archivo<input type="file" id="rapFile" accept="image/*"></label>
+      <button type="button" class="btn dark" id="rapSig">Saltar ›</button>
+    </div>
+    <span class="hint">Recorre los productos <b>sin foto</b> de la búsqueda y categoría que tengas elegidas. Al pegar una imagen se guarda y pasa al siguiente. Al terminar usa «Publicar cambios».</span>
+  </div>
+</div>
+
+<!-- resultado del lote -->
+<div class="sheet" id="loteSheet" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="loteTitle">
+    <div class="phead"><h2 id="loteTitle">Fotos en lote</h2><button type="button" class="x" data-close aria-label="Cerrar">✕</button></div>
+    <div id="loteRes" class="form"></div>
+    <button type="button" class="btn primary" data-close>Listo</button>
   </div>
 </div>
 
@@ -1473,6 +1519,93 @@ a.icard svg{stroke:var(--wa)}
       toast('Foto guardada. Recuerda «Publicar cambios».');
     } catch (e) { toast('No se pudo leer esa imagen.'); }
   }
+
+  // ---------- fotos rápidas ----------
+  let rapLista = [], rapI = 0, rapOcupado = false;
+  function rapPintar(){
+    const p = rapLista[rapI];
+    $('rapPrev').hidden = true; $('rapTxt').hidden = false;
+    if (!p){ $('rapNom').textContent = '¡Listo! No quedan productos sin foto en esta lista.'; $('rapMarca').textContent = ''; $('rapCod').textContent = '';
+      $('rapCont').textContent = 'Terminado'; $('rapGoogle').removeAttribute('href'); return; }
+    $('rapMarca').textContent = p.marca || 'MASS'; $('rapCod').textContent = 'Cód. ' + p.code; $('rapNom').textContent = p.nombre;
+    $('rapCont').textContent = (rapI + 1).toLocaleString('es-EC') + ' de ' + rapLista.length.toLocaleString('es-EC');
+    $('rapGoogle').href = 'https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(p.nombre + (p.marca && p.nombre.toUpperCase().indexOf(p.marca.toUpperCase()) < 0 ? ' ' + p.marca : ''));
+    $('rapAnt').disabled = rapI === 0;
+    setTimeout(() => $('rapZona').focus(), 50);
+  }
+  $('rapidaBtn').addEventListener('click', () => {
+    rapLista = lista().filter((p) => !fotoUrl(p)); rapI = 0;
+    if (!rapLista.length){ toast('Todos los productos de esta lista ya tienen foto'); return; }
+    abrir('rapSheet'); rapPintar();
+  });
+  $('rapSig').addEventListener('click', () => { if (rapI < rapLista.length) { rapI++; rapPintar(); } });
+  $('rapAnt').addEventListener('click', () => { if (rapI > 0) { rapI--; rapPintar(); } });
+  $('rapCopiar').addEventListener('click', async () => {
+    const p = rapLista[rapI]; if (!p) return;
+    try { await navigator.clipboard.writeText(p.nombre); toast('Nombre copiado'); } catch (e) { toast('No se pudo copiar'); }
+  });
+  async function rapGuardar(file){
+    const p = rapLista[rapI]; if (!p || rapOcupado) return;
+    if (!file || !/^image\//.test(file.type)){ toast('Eso no es una imagen. En Google usa clic derecho → Copiar imagen.'); return; }
+    rapOcupado = true;
+    try {
+      const u = URL.createObjectURL(file); $('rapPrev').src = u; $('rapPrev').hidden = false; $('rapTxt').hidden = true;
+      await subirFoto(p, file);
+      setTimeout(() => { URL.revokeObjectURL(u); rapI++; rapPintar(); rapOcupado = false; }, 700);
+    } catch (e) { rapOcupado = false; }
+  }
+  document.addEventListener('paste', (e) => {
+    if ($('rapSheet').hidden) return;
+    const it = Array.from((e.clipboardData && e.clipboardData.items) || []).find((x) => x.type && x.type.indexOf('image/') === 0);
+    if (it){ e.preventDefault(); rapGuardar(it.getAsFile()); }
+    else toast('El portapapeles no tiene una imagen. En Google usa clic derecho → Copiar imagen.');
+  });
+  const zona = $('rapZona');
+  ['dragenter', 'dragover'].forEach((t) => zona.addEventListener(t, (e) => { e.preventDefault(); zona.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach((t) => zona.addEventListener(t, () => zona.classList.remove('over')));
+  zona.addEventListener('drop', (e) => {
+    e.preventDefault();
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) rapGuardar(f); else toast('Desde otra página arrastrar no funciona: usa clic derecho → Copiar imagen y luego Ctrl + V.');
+  });
+  $('rapFile').addEventListener('change', () => { const f = $('rapFile').files[0]; $('rapFile').value = ''; if (f) rapGuardar(f); });
+
+  // ---------- fotos en lote: el nombre del archivo es el código (CODIGO.jpg o CODIGO_2.jpg) ----------
+  const byCodeUp = () => { const m = {}; prods.forEach((p) => { m[p.code.toUpperCase()] = p; }); return m; };
+  async function agregarExtraBlob(p, blob, n){
+    const l = extras[p.code] || (extras[p.code] = []);
+    if (!n || l.indexOf(n) >= 0) n = Math.max(1, ...l) + 1;
+    const key = p.code + '_' + n;
+    await idb.put(key, blob); if (fotosLocales[key]) URL.revokeObjectURL(fotosLocales[key]);
+    fotosLocales[key] = URL.createObjectURL(blob); if (l.indexOf(n) < 0) l.push(n); l.sort((a, b) => a - b);
+  }
+  $('loteFile').addEventListener('change', async () => {
+    const files = Array.from($('loteFile').files || []); $('loteFile').value = '';
+    if (!files.length) return;
+    const m = byCodeUp(), okP = [], okX = [], mal = [];
+    toast('Procesando ' + files.length + ' fotos…');
+    for (const f of files){
+      const base = f.name.replace(/\.[^.]+$/, '').trim();
+      const mm = base.match(/^(.+?)[_ -](\d{1,2})$/);
+      let p = m[base.toUpperCase()], n = 0;
+      if (!p && mm && m[mm[1].toUpperCase()]){ p = m[mm[1].toUpperCase()]; n = Number(mm[2]); }
+      if (!p){ mal.push(f.name); continue; }
+      try {
+        const blob = await reducir(f);
+        if (n >= 2) { await agregarExtraBlob(p, blob, n); okX.push(p.code + '_' + n); }
+        else {
+          await idb.put(p.code, blob); if (fotosLocales[p.code]) URL.revokeObjectURL(fotosLocales[p.code]);
+          fotosLocales[p.code] = URL.createObjectURL(blob); okP.push(p.code);
+        }
+      } catch (e) { mal.push(f.name); }
+    }
+    if (okX.length) guardarCatLocal(); else pintarPendientes();
+    render();
+    const r = $('loteRes'); r.replaceChildren();
+    if (okP.length || okX.length) r.appendChild(el('div', 'lote-ok', (okP.length ? okP.length + ' fotos principales' : '') + (okP.length && okX.length ? ' y ' : '') + (okX.length ? okX.length + ' fotos adicionales' : '') + ' guardadas. Usa «Publicar cambios» para que todos las vean.'));
+    if (mal.length) r.appendChild(el('div', 'lote-mal', mal.length + ' archivos no coinciden con ningún código del catálogo: ' + mal.slice(0, 40).join(', ') + (mal.length > 40 ? '…' : '') + '. Cámbiales el nombre al código del producto (por ejemplo 3164.jpg).'));
+    abrir('loteSheet');
+  });
 
   function abrirEditor(p){
     editando = p;
