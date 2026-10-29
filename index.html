@@ -253,6 +253,10 @@ a.icard svg{stroke:var(--wa)}
 .n-total{background:#C99A2E;color:#1A1814;border-radius:10px;padding:8px 14px;display:flex;gap:24px;align-items:baseline;font-family:var(--font-display);font-weight:800;font-size:18px;margin-left:auto}
 .n-nota{margin:0;font-size:14px}
 .install{background:var(--gold-soft);border-bottom:1px solid var(--line)}
+.rap-filtros .tgsel{height:40px;min-height:0;padding:0 12px;border-radius:99px}
+.rap-filtros{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+.panel .check-s{display:inline-flex;flex-direction:row;align-items:center;gap:6px;font-weight:600;font-size:14px;cursor:pointer}
+.panel .check-s input{width:18px;height:18px;accent-color:var(--gold);min-height:auto}
 .rap-prod{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;padding:12px;border-radius:12px;background:var(--gold-soft)}
 .rap-prod b{flex:1 1 100%;font-family:var(--font-display);font-size:19px;line-height:1.25}
 .dropzone{border:3px dashed var(--gold);border-radius:14px;min-height:240px;display:flex;align-items:center;justify-content:center;text-align:center;padding:16px;background:var(--bg);cursor:copy}
@@ -731,6 +735,14 @@ a.icard svg{stroke:var(--wa)}
 <div class="sheet" id="rapSheet" hidden>
   <div class="panel ancho" role="dialog" aria-modal="true" aria-labelledby="rapTitle">
     <div class="phead"><h2 id="rapTitle">Fotos rápidas</h2><span class="chip" id="rapCont"></span><button type="button" class="x" data-close aria-label="Cerrar">✕</button></div>
+    <div class="rap-filtros">
+      <select class="tgsel" id="rapStock" aria-label="Productos por stock">
+        <option value="todos">Todos los productos</option>
+        <option value="con">✓ Solo con stock</option>
+        <option value="sin">✕ Solo sin stock</option>
+      </select>
+      <label class="check-s"><input type="checkbox" id="rapSalt"><span>Incluir los que salté (<span id="rapNSalt">0</span>)</span></label>
+    </div>
     <div class="rap-prod">
       <span class="marca" id="rapMarca"></span> <span class="cod" id="rapCod"></span>
       <b id="rapNom"></b>
@@ -1522,10 +1534,23 @@ a.icard svg{stroke:var(--wa)}
 
   // ---------- fotos rápidas ----------
   let rapLista = [], rapI = 0, rapOcupado = false;
+  let rapSaltados = new Set(ls.get('mass_rap_saltados', []));
+  const guardarSaltados = () => ls.set('mass_rap_saltados', Array.from(rapSaltados));
+  function rapArmar(){
+    // misma búsqueda y categoría de la pantalla, pero con el filtro de stock propio de Fotos rápidas
+    const fs = $('fStock'), antes = fs.value; fs.value = 'todos';
+    let l = lista(); fs.value = antes;
+    const st = $('rapStock').value;
+    l = l.filter((p) => !fotoUrl(p) && (st === 'todos' || (st === 'con' ? hayStock(p) : !hayStock(p))));
+    const nSalt = l.filter((p) => rapSaltados.has(p.code)).length;
+    $('rapNSalt').textContent = nSalt.toLocaleString('es-EC');
+    if (!$('rapSalt').checked) l = l.filter((p) => !rapSaltados.has(p.code));
+    rapLista = l; rapI = 0; rapPintar();
+  }
   function rapPintar(){
     const p = rapLista[rapI];
     $('rapPrev').hidden = true; $('rapTxt').hidden = false;
-    if (!p){ $('rapNom').textContent = '¡Listo! No quedan productos sin foto en esta lista.'; $('rapMarca').textContent = ''; $('rapCod').textContent = '';
+    if (!p){ $('rapNom').textContent = rapLista.length ? '¡Terminaste esta lista! Los que saltaste quedan guardados: marca «Incluir los que salté» para verlos otra vez.' : 'No hay productos sin foto con estos filtros.'; $('rapMarca').textContent = ''; $('rapCod').textContent = '';
       $('rapCont').textContent = 'Terminado'; $('rapGoogle').removeAttribute('href'); return; }
     $('rapMarca').textContent = p.marca || 'MASS'; $('rapCod').textContent = 'Cód. ' + p.code; $('rapNom').textContent = p.nombre;
     $('rapCont').textContent = (rapI + 1).toLocaleString('es-EC') + ' de ' + rapLista.length.toLocaleString('es-EC');
@@ -1534,11 +1559,17 @@ a.icard svg{stroke:var(--wa)}
     setTimeout(() => $('rapZona').focus(), 50);
   }
   $('rapidaBtn').addEventListener('click', () => {
-    rapLista = lista().filter((p) => !fotoUrl(p)); rapI = 0;
-    if (!rapLista.length){ toast('Todos los productos de esta lista ya tienen foto'); return; }
-    abrir('rapSheet'); rapPintar();
+    if ($('rapStock').dataset.usado !== '1') $('rapStock').value = $('fStock').value;
+    abrir('rapSheet'); rapArmar();
   });
-  $('rapSig').addEventListener('click', () => { if (rapI < rapLista.length) { rapI++; rapPintar(); } });
+  $('rapStock').addEventListener('change', () => { $('rapStock').dataset.usado = '1'; rapArmar(); });
+  $('rapSalt').addEventListener('change', rapArmar);
+  $('rapSig').addEventListener('click', () => {
+    const p = rapLista[rapI]; if (!p) return;
+    rapSaltados.add(p.code); guardarSaltados();
+    $('rapNSalt').textContent = (Number(String($('rapNSalt').textContent).replace(/\D/g, '')) + 1).toLocaleString('es-EC');
+    rapI++; rapPintar();
+  });
   $('rapAnt').addEventListener('click', () => { if (rapI > 0) { rapI--; rapPintar(); } });
   $('rapCopiar').addEventListener('click', async () => {
     const p = rapLista[rapI]; if (!p) return;
@@ -1551,6 +1582,7 @@ a.icard svg{stroke:var(--wa)}
     try {
       const u = URL.createObjectURL(file); $('rapPrev').src = u; $('rapPrev').hidden = false; $('rapTxt').hidden = true;
       await subirFoto(p, file);
+      if (rapSaltados.delete(p.code)) guardarSaltados();
       setTimeout(() => { URL.revokeObjectURL(u); rapI++; rapPintar(); rapOcupado = false; }, 700);
     } catch (e) { rapOcupado = false; }
   }
