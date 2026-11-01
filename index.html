@@ -980,7 +980,7 @@ a.icard svg{stroke:var(--wa)}
     const art = el('article', 'card');
     const ph = el('button', 'ph'); ph.type = 'button'; ph.setAttribute('aria-label', 'Ver ' + p.nombre);
     const url = fotoUrl(p);
-    if (url) ph.appendChild(sello());
+    // el logo solo se muestra al abrir el producto
     if (url){ const img = el('img'); img.src = url; img.alt = ''; img.loading = 'lazy'; img.decoding = 'async';
       img.onerror = () => { img.remove(); ph.prepend(el('span', 'ini', iniciales(p))); }; ph.appendChild(img); }
     else ph.appendChild(el('span', 'ini', iniciales(p)));
