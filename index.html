@@ -253,6 +253,12 @@ a.icard svg{stroke:var(--wa)}
 .n-total{background:#C99A2E;color:#1A1814;border-radius:10px;padding:8px 14px;display:flex;gap:24px;align-items:baseline;font-family:var(--font-display);font-weight:800;font-size:18px;margin-left:auto}
 .n-nota{margin:0;font-size:14px}
 .install{background:var(--gold-soft);border-bottom:1px solid var(--line)}
+/* sello de la ferretería sobre cada foto: solo el logo */
+.sello{position:absolute;top:6px;left:6px;width:30px;height:35px;pointer-events:none;z-index:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
+.sello img{width:100%!important;height:100%!important;object-fit:contain!important;background:none!important}
+.det-img .sello{top:12px;left:12px;width:54px;height:62px}
+.n-tabla .sello,.thumb .sello{display:none}
+@media (max-width:699px){.sello{width:24px;height:28px;top:4px;left:4px}.det-img .sello{width:44px;height:50px}}
 .subtot{display:flex;flex-direction:column;gap:4px;padding-bottom:8px;border-bottom:1px dashed var(--line);margin-bottom:6px;font-size:15px;color:var(--muted)}
 .subtot div{display:flex;justify-content:space-between;gap:10px;font-variant-numeric:tabular-nums}
 .subtot div span:last-child{font-weight:700;color:var(--fg)}
@@ -334,7 +340,7 @@ a.icard svg{stroke:var(--wa)}
 @media (max-width:340px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .card{border-radius:10px}
 .ph .ini{font-size:22px}
-.ph .ag{top:5px;left:5px}
+.ph .ag{top:auto;bottom:5px;left:5px}
 .body{padding:6px 8px 8px;gap:2px}
 .meta{font-size:9.5px;gap:4px}
 .marca{letter-spacing:.03em}
@@ -890,6 +896,11 @@ a.icard svg{stroke:var(--wa)}
   const fmtStock = (n) => Number(n).toLocaleString('es-EC', { maximumFractionDigits: 2 });
   const hayStock = (p) => (p.stock != null ? p.stock > 0 : !p.agotado);
   const verStock = (p) => p.stock != null && (admin || !info.ocultarStock);
+  function sello(){
+    const s = el('span', 'sello'); s.setAttribute('aria-hidden', 'true');
+    const im = el('img'); im.src = 'logo_mass.png'; im.alt = ''; s.appendChild(im);
+    return s;
+  }
   const iniciales = (p) => (p.marca || p.nombre || '?').replace(/[^A-Za-zÁÉÍÓÚÑ0-9 ]/g, '').trim().slice(0, 2).toUpperCase() || 'MF';
 
   function lista(){
@@ -962,6 +973,7 @@ a.icard svg{stroke:var(--wa)}
     const art = el('article', 'card');
     const ph = el('button', 'ph'); ph.type = 'button'; ph.setAttribute('aria-label', 'Ver ' + p.nombre);
     const url = fotoUrl(p);
+    if (url) ph.appendChild(sello());
     if (url){ const img = el('img'); img.src = url; img.alt = ''; img.loading = 'lazy'; img.decoding = 'async';
       img.onerror = () => { img.remove(); ph.prepend(el('span', 'ini', iniciales(p))); }; ph.appendChild(img); }
     else ph.appendChild(el('span', 'ini', iniciales(p)));
@@ -1073,7 +1085,7 @@ a.icard svg{stroke:var(--wa)}
     const fotos = fotosDe(p); galIdx = Math.max(0, Math.min(idx, fotos.length - 1));
     const box = $('detImg'); box.replaceChildren();
     if (fotos.length){
-      const i = el('img'); i.src = fotos[galIdx].url; i.alt = 'Foto ' + (galIdx + 1) + ' de ' + p.nombre; box.appendChild(i);
+      const i = el('img'); i.src = fotos[galIdx].url; i.alt = 'Foto ' + (galIdx + 1) + ' de ' + p.nombre; box.appendChild(i); box.appendChild(sello());
       if (fotos.length > 1){
         const a = el('button', 'nav prev', '‹'); a.type = 'button'; a.setAttribute('aria-label', 'Foto anterior');
         const b = el('button', 'nav next', '›'); b.type = 'button'; b.setAttribute('aria-label', 'Foto siguiente');
