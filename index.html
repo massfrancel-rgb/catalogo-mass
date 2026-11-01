@@ -253,6 +253,14 @@ a.icard svg{stroke:var(--wa)}
 .n-total{background:#C99A2E;color:#1A1814;border-radius:10px;padding:8px 14px;display:flex;gap:24px;align-items:baseline;font-family:var(--font-display);font-weight:800;font-size:18px;margin-left:auto}
 .n-nota{margin:0;font-size:14px}
 .install{background:var(--gold-soft);border-bottom:1px solid var(--line)}
+.subtot{display:flex;flex-direction:column;gap:4px;padding-bottom:8px;border-bottom:1px dashed var(--line);margin-bottom:6px;font-size:15px;color:var(--muted)}
+.subtot div{display:flex;justify-content:space-between;gap:10px;font-variant-numeric:tabular-nums}
+.subtot div span:last-child{font-weight:700;color:var(--fg)}
+.envbox{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:12px;background:var(--gold-soft)}
+.panel .envsum{flex-direction:row;align-items:center;gap:8px;font-weight:600}
+.panel .envsum input{width:20px;height:20px;min-height:auto;accent-color:var(--gold)}
+.n-sub{display:flex;flex-direction:column;gap:3px;margin-left:auto;min-width:220px;font-size:14px}
+.n-sub div{display:flex;justify-content:space-between;gap:16px;font-variant-numeric:tabular-nums}
 .rap-filtros .tgsel{height:40px;min-height:0;padding:0 12px;border-radius:99px}
 .rap-filtros{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
 .panel .check-s{display:inline-flex;flex-direction:row;align-items:center;gap:6px;font-weight:600;font-size:14px;cursor:pointer}
@@ -494,6 +502,10 @@ a.icard svg{stroke:var(--wa)}
     <div class="cart-list" id="cartList"></div>
     <div id="cartEmpty" class="empty" hidden>Todavía no agregas productos. Busca lo que necesitas y toca «Agregar».</div>
     <div id="cartForm">
+      <div class="subtot" id="cartSubWrap" hidden>
+        <div><span>Subtotal productos</span><span id="cartSub">$0.00</span></div>
+        <div><span id="cartEnvLbl">Envío</span><span id="cartEnv">$0.00</span></div>
+      </div>
       <div class="total"><span>Total</span><span id="cartTotal">$0.00</span></div>
       <p class="hint" style="margin:4px 0 14px">Precios referenciales. Te confirmamos el valor final y la disponibilidad por WhatsApp.</p>
       <div style="display:flex;flex-direction:column;gap:12px">
@@ -504,6 +516,11 @@ a.icard svg{stroke:var(--wa)}
           <label><input type="radio" name="ent" value="envio"> Envío</label>
         </div>
         <label id="dirWrap" hidden>Dirección de entrega<textarea id="cDir" maxlength="250" placeholder="Calle, número, referencia"></textarea></label>
+        <div class="envbox" id="envWrap" hidden>
+          <label for="cEnvio">Costo de envío ($)<input id="cEnvio" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Por confirmar"></label>
+          <label class="envsum"><input type="checkbox" id="cEnvioSumar" checked><span>Sumar el envío al total</span></label>
+          <button type="button" class="linkbtn" id="envDef" hidden>Guardar este valor como costo de envío predeterminado</button>
+        </div>
         <label>Nota (opcional)<input id="cNota" maxlength="200" placeholder="Ej.: necesito factura con RUC"></label>
         <div class="btns">
           <button type="button" class="btn wa grow" id="cartSend">Enviar pedido por WhatsApp</button>
@@ -1151,7 +1168,12 @@ a.icard svg{stroke:var(--wa)}
       if (p.agotado) info.appendChild(el('span', 'pill warn', 'Agotado: lo confirmamos contigo'));
       it.append(th, info); list.appendChild(it);
     });
-    $('cartTotal').textContent = money(total);
+    const ev = envioActual();
+    $('cartSubWrap').hidden = !ev.activo;
+    $('cartSub').textContent = money(total);
+    $('cartEnvLbl').textContent = ev.suma || !ev.valor ? 'Envío' : 'Envío (no se suma)';
+    $('cartEnv').textContent = ev.valor > 0 ? money(ev.valor) : 'Por confirmar';
+    $('cartTotal').textContent = money(total + (ev.activo && ev.suma ? ev.valor : 0));
     $('cartEmpty').hidden = codes.length > 0;
     $('cartForm').hidden = codes.length === 0;
     $('cartClearTop').hidden = codes.length === 0 || !$('cartDone').hidden;
@@ -1173,9 +1195,25 @@ a.icard svg{stroke:var(--wa)}
       }
     }
   }
+  function envioActual(){
+    const activo = document.querySelector('input[name="ent"]:checked').value === 'envio';
+    const v = parseFloat(String($('cEnvio').value).replace(',', '.'));
+    return { activo, valor: activo && isFinite(v) && v > 0 ? Math.round(v * 100) / 100 : 0, suma: $('cEnvioSumar').checked };
+  }
   document.querySelectorAll('input[name="ent"]').forEach((r) => r.addEventListener('change', () => {
-    $('dirWrap').hidden = document.querySelector('input[name="ent"]:checked').value !== 'envio';
+    const env = document.querySelector('input[name="ent"]:checked').value === 'envio';
+    $('dirWrap').hidden = !env; $('envWrap').hidden = !env;
+    if (env && !$('cEnvio').value && info.envio > 0) $('cEnvio').value = Number(info.envio).toFixed(2);
+    $('envDef').hidden = !admin;
+    pintarCarrito();
   }));
+  ['input', 'change'].forEach((t) => { $('cEnvio').addEventListener(t, pintarCarrito); });
+  $('cEnvioSumar').addEventListener('change', pintarCarrito);
+  $('envDef').addEventListener('click', () => {
+    const v = envioActual().valor;
+    if (v > 0) info.envio = v; else delete info.envio;
+    guardarCatLocal(); toast(v > 0 ? 'Costo de envío predeterminado: ' + money(v) + '. Recuerda «Publicar cambios».' : 'Se quitó el costo de envío predeterminado');
+  });
   const cli = ls.get('mass_cliente', {});
   $('cNombre').value = cli.n || ''; $('cDir').value = (sesion && sesion.perfil.dir) || cli.d || '';
 
@@ -1196,9 +1234,12 @@ a.icard svg{stroke:var(--wa)}
       fecha: z(d.getDate()) + '/' + z(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + z(d.getHours()) + ':' + z(d.getMinutes()),
       nombre, tel: pf ? pf.tel : '', ruc: pf ? pf.ruc : '', correo: pf ? pf.correo : '',
       entrega: envio ? 'Envío a domicilio' : 'Retiro en el local', dir: envio ? dir : '',
-      nota: $('cNota').value.trim(), items,
-      total: Math.round(items.reduce((s, x) => s + x.p * x.q, 0) * 100) / 100
+      nota: $('cNota').value.trim(), items
     };
+    const ev = envioActual();
+    ultimoPedido.subtotal = Math.round(items.reduce((s, x) => s + x.p * x.q, 0) * 100) / 100;
+    ultimoPedido.envioOn = envio; ultimoPedido.envio = ev.valor; ultimoPedido.envioSuma = ev.suma;
+    ultimoPedido.total = Math.round((ultimoPedido.subtotal + (envio && ev.suma ? ev.valor : 0)) * 100) / 100;
     abrirWhatsApp();
     if (pf){
       const up = ultimoPedido;
@@ -1218,6 +1259,7 @@ a.icard svg{stroke:var(--wa)}
   function codificar(o){
     const d = { v: 1, n: o.num, f: o.fecha, c: [o.nombre, o.ruc, o.tel, o.correo], e: o.entrega, d: o.dir, o: o.nota,
       i: o.items.map((x) => [x.c, x.q, x.p]) };
+    if (o.envioOn) d.s = [o.envio || 0, o.envioSuma ? 1 : 0];
     const bytes = new TextEncoder().encode(JSON.stringify(d));
     let bin = ''; bytes.forEach((b) => { bin += String.fromCharCode(b); });
     return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -1228,9 +1270,17 @@ a.icard svg{stroke:var(--wa)}
     const items = (d.i || []).map((x) => ({ c: String(x[0]), q: Number(x[1]) || 0, p: Number(x[2]) || 0,
       n: byCode[String(x[0])] ? byCode[String(x[0])].nombre : 'Producto cód. ' + x[0] }));
     const c = d.c || [];
+    const subtotal = Math.round(items.reduce((s, x) => s + x.p * x.q, 0) * 100) / 100;
+    const sv = d.s || null, envio = sv ? Number(sv[0]) || 0 : 0, envioSuma = sv ? sv[1] === 1 : false;
     return { num: d.n, fecha: d.f, nombre: c[0] || '', ruc: c[1] || '', tel: c[2] || '', correo: c[3] || '',
-      entrega: d.e || '', dir: d.d || '', nota: d.o || '', items,
-      total: Math.round(items.reduce((s, x) => s + x.p * x.q, 0) * 100) / 100 };
+      entrega: d.e || '', dir: d.d || '', nota: d.o || '', items, subtotal, envioOn: !!sv, envio, envioSuma,
+      total: Math.round((subtotal + (envioSuma ? envio : 0)) * 100) / 100 };
+  }
+  // líneas de envío para el mensaje, la vista y el PDF
+  function lineasEnvio(o){
+    if (!o.envioOn) return [];
+    if (!(o.envio > 0)) return [['Envío', 'Por confirmar']];
+    return [['Subtotal productos', money(o.subtotal != null ? o.subtotal : o.total)], [o.envioSuma ? 'Envío' : 'Envío (no incluido en el total)', money(o.envio)]];
   }
   const enlaceNota = (o) => location.origin + location.pathname.replace(/index\.html$/, '') + '#nota=' + codificar(o);
 
@@ -1238,7 +1288,7 @@ a.icard svg{stroke:var(--wa)}
     const o = ultimoPedido;
     const msg = ['*NOTA DE PEDIDO N° ' + o.num + '*', 'MASS FERRETERÍA', '',
       'Cliente: ' + o.nombre, 'Entrega: ' + o.entrega + (o.dir ? ' – ' + o.dir : ''),
-      'Artículos: ' + o.items.length + ' · Unidades: ' + unidadesDe(o), '*Total: ' + money(o.total) + '*', '',
+      'Artículos: ' + o.items.length + ' · Unidades: ' + unidadesDe(o), ...lineasEnvio(o).map((l) => l[0] + ': ' + l[1]), '*Total: ' + money(o.total) + '*', '',
       '📄 Ver la nota de pedido (PDF):', enlaceNota(o)].join('\n');
     window.open('https://wa.me/' + WA + '?text=' + encodeURIComponent(msg), '_blank', 'noopener');
   }
@@ -1273,6 +1323,8 @@ a.icard svg{stroke:var(--wa)}
     t.appendChild(tb); tw.appendChild(t); box.appendChild(tw);
     const tot = el('div', 'n-tot');
     tot.append(el('span', 'hint', 'Artículos: ' + o.items.length + ' · Unidades: ' + unidadesDe(o)));
+    const le = lineasEnvio(o);
+    if (le.length){ const sb = el('div', 'n-sub'); le.forEach(([k, v]) => { const r = el('div'); r.append(el('span', null, k), el('b', null, v)); sb.appendChild(r); }); tot.appendChild(sb); }
     const tt = el('div', 'n-total'); tt.append(el('span', null, 'TOTAL'), el('b', null, money(o.total))); tot.appendChild(tt);
     box.appendChild(tot);
     if (o.nota) box.appendChild(el('p', 'n-nota', 'Nota: ' + o.nota));
@@ -1405,6 +1457,12 @@ a.icard svg{stroke:var(--wa)}
     const unidades = o.items.reduce((s, x) => s + x.q, 0);
     doc.setFontSize(9.5); doc.setTextColor(...gris);
     doc.text('Artículos: ' + o.items.length + '   ·   Unidades: ' + unidades, M, y + 4);
+    lineasEnvio(o).forEach(([k, v]) => {
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(...osc);
+      doc.text(k, W - M - 70, y + 4); doc.setFont('helvetica', 'bold'); doc.text(v, W - M - 4, y + 4, { align: 'right' });
+      y += 6.5;
+    });
+    if (lineasEnvio(o).length) y += 2;
     doc.setFillColor(...oro); doc.roundedRect(W - M - 70, y - 2, 70, 12, 2, 2, 'F');
     doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(...osc);
     doc.text('TOTAL', W - M - 66, y + 6); doc.text(money(o.total), W - M - 4, y + 6, { align: 'right' });
