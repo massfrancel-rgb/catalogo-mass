@@ -168,6 +168,11 @@ footer .admin{margin-left:auto;background:none;border:1px solid #3A352C;color:#A
 .impgrid div{display:flex;flex-direction:column;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
 .impgrid b{font-family:var(--font-display);font-size:22px;font-variant-numeric:tabular-nums}
 .impgrid span{font-size:13px;color:var(--muted)}
+.resp-est{display:grid;grid-template-columns:1fr 1fr;gap:10px;background:var(--gold-soft);border-radius:10px;padding:10px 12px}
+.resp-est>div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.resp-est b{overflow-wrap:anywhere}
+.resp-h{margin:6px 0 0;font-size:16px}
+#respBtn.warn{background:var(--warn-bg);color:var(--warn-fg);border-color:transparent}
 ol.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;
   background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:700;font-size:15px;max-width:calc(100% - 32px)}
@@ -434,6 +439,7 @@ a.icard svg{stroke:var(--wa)}
     <a class="btn" href="plantilla.html" target="_blank" rel="noopener">Crear ficha</a>
     <label class="btn primary">Actualizar desde Anfibus<input id="importFile" type="file" accept=".xls,.xlsx"></label>
     <button type="button" class="btn" id="clientesBtn" hidden>Clientes</button>
+    <button type="button" class="btn" id="respBtn">💾 Respaldo</button>
     <button type="button" class="btn dark" id="exportBtn">Publicar cambios</button>
     <button type="button" class="btn quiet" id="adminExit">Salir</button>
   </div>
@@ -617,6 +623,29 @@ a.icard svg{stroke:var(--wa)}
     <div class="btns">
       <button type="button" class="btn primary grow" id="pubDl">Descargar archivos</button>
       <button type="button" class="btn quiet" id="pubDone">Ya los subí: verificar</button>
+    </div>
+  </div>
+</div>
+
+<!-- respaldo -->
+<div class="sheet" id="respSheet" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="respTitle">
+    <div class="phead"><h2 id="respTitle">Respaldo del catálogo</h2><button type="button" class="x" data-close aria-label="Cerrar">✕</button></div>
+    <p style="margin:0">Guarda en una carpeta de este equipo todo lo que el catálogo tiene solo aquí: fotos sin publicar, cambios del catálogo, textos de la empresa y ajustes. Se graba <b>una vez al día, automáticamente</b>, siempre con el mismo nombre: <b>respaldo-catalogo-mass.json</b>.</p>
+    <div class="resp-est">
+      <div><span class="hint">Carpeta</span><b id="respCarpeta">Sin elegir</b></div>
+      <div><span class="hint">Último respaldo</span><b id="respUltimo">Nunca</b></div>
+    </div>
+    <span class="hint" id="respAviso"></span>
+    <div class="btns">
+      <button type="button" class="btn" id="respElegir">Elegir carpeta</button>
+      <button type="button" class="btn primary grow" id="respAhora">Respaldar ahora</button>
+    </div>
+    <h3 class="resp-h">Restaurar</h3>
+    <span class="hint">Si se pierden los datos de este equipo, recupéralos desde el respaldo. Se reemplazan las fotos y cambios que haya ahora en este equipo.</span>
+    <div class="btns">
+      <button type="button" class="btn" id="respRestCarpeta">Restaurar desde la carpeta</button>
+      <label class="btn">Restaurar desde un archivo…<input type="file" id="respArchivo" accept=".json,application/json" hidden></label>
     </div>
   </div>
 </div>
@@ -2224,6 +2253,125 @@ a.icard svg{stroke:var(--wa)}
     guardarCatLocal(); abrirInfo(infoActual); toast('Página guardada. Recuerda «Publicar cambios».');
   });
 
+  // ---------- respaldo diario en una carpeta del equipo ----------
+  const RESP_NOMBRE = 'respaldo-catalogo-mass.json';
+  const respDB = {
+    open(){
+      return new Promise((res, rej) => {
+        try {
+          const r = indexedDB.open('mass_respaldo', 1);
+          r.onupgradeneeded = () => r.result.createObjectStore('cfg');
+          r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+        } catch (e) { rej(e); }
+      });
+    },
+    async get(k){ const db = await this.open(); return new Promise((res) => { const r = db.transaction('cfg').objectStore('cfg').get(k); r.onsuccess = () => res(r.result); r.onerror = () => res(null); }); },
+    async set(k, v){ const db = await this.open(); return new Promise((res, rej) => { const tx = db.transaction('cfg', 'readwrite'); tx.objectStore('cfg').put(v, k); tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error); }); }
+  };
+  const puedeCarpeta = 'showDirectoryPicker' in window;
+  let respCarpeta = null, respOcupado = false, respPidio = false;
+  const fechaHora = (iso) => { try { return new Date(iso).toLocaleString('es-EC', { dateStyle: 'medium', timeStyle: 'short' }); } catch (e) { return iso; } };
+  const blobADatos = (b) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(r.error); r.readAsDataURL(b); });
+  const datosABlob = async (u) => (await fetch(u)).blob();
+
+  async function armarRespaldo(){
+    const datos = {};
+    for (let i = 0; i < localStorage.length; i++){
+      const k = localStorage.key(i);
+      if (k && k.indexOf('mass_') === 0 && k.indexOf('mass_resp_') !== 0) datos[k] = localStorage.getItem(k);
+    }
+    const fotos = {};
+    try { for (const k of await idb.keys()){ const b = await idb.get(k); if (b) fotos[k] = await blobADatos(b); } } catch (e) {}
+    return { app: 'catalogo-mass', version: 1, fecha: new Date().toISOString(), datos, fotos, catalogo: prods.length ? catalogoActual() : null };
+  }
+  async function permiso(h, pedir){
+    const o = { mode: 'readwrite' };
+    try {
+      if (await h.queryPermission(o) === 'granted') return true;
+      if (pedir && await h.requestPermission(o) === 'granted') return true;
+    } catch (e) {}
+    return false;
+  }
+  async function respaldar(pedir, aviso){
+    if (respOcupado) return false;
+    if (!respCarpeta){ if (aviso) toast('Primero elige la carpeta del respaldo'); return false; }
+    if (!await permiso(respCarpeta, pedir)){ marcarRespPend(true); if (aviso) toast('Chrome no dio permiso para escribir en la carpeta'); return false; }
+    respOcupado = true;
+    try {
+      const r = await armarRespaldo();
+      const fh = await respCarpeta.getFileHandle(RESP_NOMBRE, { create: true });
+      const w = await fh.createWritable(); await w.write(new Blob([JSON.stringify(r)], { type: 'application/json' })); await w.close();
+      ls.set('mass_resp_ultimo', r.fecha); ls.set('mass_resp_dia', hoy());
+      marcarRespPend(false); pintarResp();
+      if (aviso) toast('Respaldo guardado en «' + respCarpeta.name + '»');
+      return true;
+    } catch (e) {
+      if (aviso) toast('No se pudo guardar el respaldo: ' + (e && e.message || e));
+      return false;
+    } finally { respOcupado = false; }
+  }
+  function marcarRespPend(on){ $('respBtn').classList.toggle('warn', !!on); $('respBtn').textContent = on ? '💾 Respaldo pendiente' : '💾 Respaldo'; }
+  function pintarResp(){
+    $('respCarpeta').textContent = respCarpeta ? respCarpeta.name : (puedeCarpeta ? 'Sin elegir' : 'No disponible aquí');
+    const u = ls.get('mass_resp_ultimo', null);
+    $('respUltimo').textContent = u ? fechaHora(u) : 'Nunca';
+    $('respElegir').hidden = !puedeCarpeta; $('respAhora').hidden = !puedeCarpeta; $('respRestCarpeta').hidden = !respCarpeta;
+    $('respElegir').textContent = respCarpeta ? 'Cambiar carpeta' : 'Elegir carpeta';
+    $('respAviso').textContent = !puedeCarpeta
+      ? 'El respaldo automático funciona en la PC con Google Chrome. Aquí solo puedes restaurar desde un archivo.'
+      : (respCarpeta ? 'Cuando Chrome pregunte, elige «Permitir en cada visita» para que el respaldo se grabe solo cada día.'
+                     : 'Sugerencia: crea en el disco C una carpeta llamada «Respaldo Catalogo MASS» y elígela.');
+  }
+  // revisa si ya se respaldó hoy; si no, respalda sin preguntar (si Chrome ya dio permiso)
+  async function respaldoDiario(){
+    if (!respCarpeta || ls.get('mass_resp_dia', '') === hoy()) return;
+    if (!await respaldar(false, false)) marcarRespPend(true);
+  }
+  $('respBtn').addEventListener('click', () => { pintarResp(); abrir('respSheet'); });
+  $('respElegir').addEventListener('click', async () => {
+    try {
+      const h = await window.showDirectoryPicker({ id: 'respaldo-mass', mode: 'readwrite', startIn: 'documents' });
+      respCarpeta = h; await respDB.set('carpeta', h); ls.del('mass_resp_dia');
+      pintarResp(); await respaldar(true, true);
+    } catch (e) { if (e && e.name !== 'AbortError') toast('No se pudo elegir la carpeta'); }
+  });
+  $('respAhora').addEventListener('click', () => respaldar(true, true));
+
+  async function restaurar(texto){
+    let r;
+    try { r = JSON.parse(texto); } catch (e) { toast('Ese archivo no es un respaldo válido'); return; }
+    if (!r || r.app !== 'catalogo-mass' || !r.datos){ toast('Ese archivo no es un respaldo del Catálogo MASS'); return; }
+    const nf = Object.keys(r.fotos || {}).length;
+    if (!confirm('¿Restaurar el respaldo del ' + fechaHora(r.fecha) + '?\n\nTrae ' + nf + (nf === 1 ? ' foto' : ' fotos') + ' sin publicar y los cambios guardados en ese momento. Lo que hay ahora en este equipo se reemplaza.')) return;
+    try {
+      Object.keys(localStorage).forEach((k) => { if (k.indexOf('mass_') === 0 && k.indexOf('mass_resp_') !== 0 && !(k in r.datos)) localStorage.removeItem(k); });
+      Object.keys(r.datos).forEach((k) => localStorage.setItem(k, r.datos[k]));
+      await idb.clear();
+      for (const k of Object.keys(r.fotos || {})) await idb.put(k, await datosABlob(r.fotos[k]));
+      toast('Respaldo restaurado. Recargando…');
+      setTimeout(() => location.reload(), 900);
+    } catch (e) { toast('No se pudo restaurar: ' + (e && e.message || e)); }
+  }
+  $('respRestCarpeta').addEventListener('click', async () => {
+    if (!respCarpeta || !await permiso(respCarpeta, true)){ toast('Chrome no dio permiso para leer la carpeta'); return; }
+    try { const f = await (await respCarpeta.getFileHandle(RESP_NOMBRE)).getFile(); await restaurar(await f.text()); }
+    catch (e) { toast('No hay ningún respaldo en «' + respCarpeta.name + '» todavía'); }
+  });
+  $('respArchivo').addEventListener('change', async (e) => {
+    const f = e.target.files[0]; e.target.value = ''; if (f) await restaurar(await f.text());
+  });
+  // si falta el permiso, el próximo clic en la app lo pide y respalda
+  document.addEventListener('click', (e) => {
+    if (respPidio || !respCarpeta || !$('respBtn').classList.contains('warn') || e.target.closest('#respSheet')) return;
+    if (ls.get('mass_resp_dia', '') !== hoy()){ respPidio = true; respaldar(true, true); }
+  }, true);
+  async function iniciarRespaldo(){
+    if (!puedeCarpeta) return;
+    try { respCarpeta = (await respDB.get('carpeta')) || null; } catch (e) { respCarpeta = null; }
+    pintarResp(); await respaldoDiario();
+    setInterval(respaldoDiario, 30 * 60 * 1000);   // si la app queda abierta, revisa cada media hora (cambio de día)
+  }
+
   // ---------- instalación ----------
   let evInstall = null;
   window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); evInstall = e; if (!ls.get('mass_noinst', false)) $('installBar').hidden = false; });
@@ -2243,7 +2391,7 @@ a.icard svg{stroke:var(--wa)}
       cargarCatalogo(local || d);
     })
     .catch(() => { if (local) cargarCatalogo(local); else $('nShown').textContent = 'No se pudo cargar el catálogo. Revisa tu conexión.'; })
-    .then(() => { if (sessionStorage.getItem('mass_admin') === '1' && ls.get('mass_pin', null)) entrarAdmin(); revisarEnlaceNota(); revisarEnlaceProducto(); });
+    .then(() => { if (sessionStorage.getItem('mass_admin') === '1' && ls.get('mass_pin', null)) entrarAdmin(); revisarEnlaceNota(); revisarEnlaceProducto(); iniciarRespaldo(); });
 })();
 </script>
 </body>
