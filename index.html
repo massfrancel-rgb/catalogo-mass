@@ -440,6 +440,7 @@ a.icard svg{stroke:var(--wa)}
     <b>Modo administrador</b>
     <span class="chip" id="admPend">Sin cambios por publicar</span>
     <label class="chip" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;padding:6px 12px"><input type="checkbox" id="optStock" style="width:18px;height:18px;accent-color:var(--gold)"> Clientes ven el stock</label>
+    <button type="button" class="chip" id="optPos" style="cursor:pointer;padding:6px 12px">🔗 Enlazar con POS MASS MF</button>
     <span class="sp"></span>
     <button type="button" class="btn primary" id="rapidaBtn">⚡ Fotos rápidas</button>
     <label class="btn">Subir fotos en lote<input type="file" id="loteFile" accept="image/*" multiple></label>
@@ -955,7 +956,22 @@ a.icard svg{stroke:var(--wa)}
     cats.map((c, i) => ({ c, i })).sort((a, b) => a.c.localeCompare(b.c, 'es')).forEach(({ c, i }) => sel.appendChild(new Option(c, String(i))));
     sel.value = sel.querySelector('option[value="' + prev + '"]') ? prev : 'todas';
     $('fechaCat').textContent = fechaCat ? 'Catálogo al ' + new Date(fechaCat + 'T12:00:00').toLocaleDateString('es-EC', { dateStyle: 'long' }) : '';
-    render(); pintarCarrito();
+    render(); pintarCarrito(); cargarStockPOS();
+  }
+  // ---------- stock en vivo desde POS MASS MF ----------
+  async function nubePOS(datos){
+    const r = await fetch(info.pos, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(datos), redirect: 'follow' });
+    if (!r.ok) throw new Error('red');
+    return r.json();
+  }
+  async function cargarStockPOS(){
+    if (!info.pos) return;
+    try {
+      const r = await nubePOS({ cat: 'stock' });
+      if (!r || !r.ok || !r.s) return;
+      prods.forEach((p) => { if (Object.prototype.hasOwnProperty.call(r.s, p.code)) p.stock = Number(r.s[p.code]) || 0; });
+      render(); pintarCarrito();
+    } catch (e) { /* sin conexión: se queda el stock publicado */ }
   }
   function buscarDe(p){ return norm(p.code + ' ' + p.nombre + ' ' + p.marca + ' ' + (cats[p.ci] || '') + ' ' + (p.desc || '')); }
   function descripciones(){ const o = {}; prods.forEach((p) => { if (p.desc || p.esp) o[p.code] = [p.desc || '', p.esp || '']; }); return o; }
@@ -1320,7 +1336,7 @@ a.icard svg{stroke:var(--wa)}
   }
   $('ctasEdit').addEventListener('click', () => { cerrar('cartSheet'); abrirInfo('cuentas'); });
 
-  $('cartSend').addEventListener('click', () => {
+  $('cartSend').addEventListener('click', async () => {
     const codes = Object.keys(cart).filter((c) => byCode[c]);
     if (!codes.length) return;
     const pf = sesion ? sesion.perfil : null;
@@ -1353,16 +1369,39 @@ a.icard svg{stroke:var(--wa)}
       banco, transf, nota: $('cNota').value.trim(), items
     };
     const ev = envioActual();
+    // registrar el pedido en POS MASS MF (separa el stock). La ventana de WhatsApp se abre antes para que el celular no la bloquee.
+    let ventana = null;
+    if (info.pos){
+      try { ventana = window.open('', '_blank'); if (ventana) ventana.document.write('<p style="font:18px sans-serif;padding:24px">Registrando tu pedido en MASS FERRETERÍA…</p>'); } catch (e) { ventana = null; }
+      ocupado($('cartSend'), true, 'Registrando tu pedido…');
+      try {
+        const up = ultimoPedido;
+        const r = await nubePOS({ cat: 'pedido', pedido: { num: up.num, nombre, ruc, tel, correo, ciudad, dirCli, envio, dir, ciudadEnv, banco, transf,
+          nota: up.nota, costoEnvio: envio ? ev.valor : 0, items: items.map((x) => ({ c: x.c, q: x.q })) } });
+        if (!r.ok){
+          if (ventana) ventana.close();
+          if (r.sinStock) cargarStockPOS();
+          alert(r.error || 'No se pudo registrar el pedido.');
+          return;
+        }
+        up.pos = r.num;
+        (r.items || []).forEach((y) => { const x = up.items.find((i) => i.c === y.c); if (x && y.p > 0) x.p = y.p; });
+        Object.keys(r.quedan || {}).forEach((c) => { if (byCode[c]) byCode[c].stock = r.quedan[c]; });
+      } catch (e) {
+        ultimoPedido.noReg = true;   // sin conexión con el POS: igual se envía por WhatsApp
+      } finally { ocupado($('cartSend'), false); }
+    }
     ultimoPedido.subtotal = Math.round(items.reduce((s, x) => s + x.p * x.q, 0) * 100) / 100;
     ultimoPedido.envioOn = envio; ultimoPedido.envio = ev.valor; ultimoPedido.envioSuma = ev.suma;
     ultimoPedido.total = Math.round((ultimoPedido.subtotal + (envio && ev.suma ? ev.valor : 0)) * 100) / 100;
-    abrirWhatsApp();
+    abrirWhatsApp(ventana);
     if (pf){
       const up = ultimoPedido;
       api({ accion: 'pedido', token: sesion.token, entrega: up.entrega + (up.dir ? ': ' + up.dir + ', ' + up.ciudadEnv : ''),
         nota: 'Pedido N° ' + up.num + ' · Transferencia ' + up.banco + ' N° ' + up.transf + (up.nota ? ' · ' + up.nota : ''), total: up.total, items }, true).catch(() => {});
     }
-    $('doneMsg').textContent = 'Pedido N° ' + ultimoPedido.num + ' enviado a WhatsApp.';
+    $('doneMsg').textContent = 'Pedido N° ' + ultimoPedido.num + ' enviado a WhatsApp.' + (ultimoPedido.pos ? ' Ya está registrado y los productos quedan separados mientras verificamos tu transferencia.' : '');
+    render();
     $('doneCompartir').hidden = !puedeCompartirArchivos();
     $('cartForm').hidden = true; $('cartList').hidden = true; $('cartDone').hidden = false; $('cartClearTop').hidden = true;
   });
@@ -1410,13 +1449,15 @@ a.icard svg{stroke:var(--wa)}
   }
   const enlaceNota = (o) => location.origin + location.pathname.replace(/index\.html$/, '') + '#nota=' + codificar(o);
 
-  function abrirWhatsApp(){
+  function abrirWhatsApp(ventana){
     const o = ultimoPedido;
     const msg = ['*NOTA DE PEDIDO N° ' + o.num + '*', 'MASS FERRETERÍA', '',
       ...filasCliente(o).map((f) => f[0] + ': ' + f[1]), '',
       'Artículos: ' + o.items.length + ' · Unidades: ' + unidadesDe(o), ...lineasEnvio(o).map((l) => l[0] + ': ' + l[1]), '*Total: ' + money(o.total) + '*', '',
+      ...(o.pos ? ['✅ Registrado en el sistema: ' + o.pos] : o.noReg ? ['⚠️ Pedido NO registrado en el POS (sin conexión). Regístralo a mano.'] : []),
       '📄 Ver la nota de pedido (PDF):', enlaceNota(o)].join('\n');
-    window.open('https://wa.me/' + WA + '?text=' + encodeURIComponent(msg), '_blank', 'noopener');
+    const url = 'https://wa.me/' + WA + '?text=' + encodeURIComponent(msg);
+    if (ventana && !ventana.closed) ventana.location.href = url; else window.open(url, '_blank', 'noopener');
   }
 
   // Vista de la nota (como factura), para el cliente y para la tienda
@@ -1659,7 +1700,19 @@ a.icard svg{stroke:var(--wa)}
     if ($('optStock').checked) delete info.ocultarStock; else info.ocultarStock = 1;
     guardarCatLocal(); toast($('optStock').checked ? 'Los clientes verán las unidades en stock' : 'El stock solo lo verás tú (modo administrador)');
   });
+  function pintarOptPos(){ $('optPos').textContent = info.pos ? '🔗 Enlazado con POS MASS MF' : '🔗 Enlazar con POS MASS MF'; }
+  $('optPos').addEventListener('click', () => {
+    const u = prompt('Pega la dirección de la nube del POS MASS MF (la URL del script de Google que termina en /exec).\nDéjalo vacío para desenlazar.', info.pos || '');
+    if (u == null) return;
+    const url = u.trim();
+    if (url && !/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(url)){ toast('Esa dirección no es válida. Debe empezar con https://script.google.com/macros/s/ y terminar en /exec'); return; }
+    if (url) info.pos = url; else delete info.pos;
+    guardarCatLocal(); pintarOptPos();
+    toast(url ? 'Enlazado con el POS. Recuerda «Publicar cambios» para que los clientes lo usen.' : 'Se quitó el enlace con el POS. Recuerda «Publicar cambios».');
+    if (url) cargarStockPOS();
+  });
   async function entrarAdmin(){
+    pintarOptPos();
     $('optStock').checked = !info.ocultarStock;
     admin = true; sessionStorage.setItem('mass_admin', '1');
     $('adminBar').hidden = false; $('tgSinFoto').hidden = false; $('clientesBtn').hidden = !API;
