@@ -978,7 +978,7 @@ a.icard svg{stroke:var(--wa)}
   function extrasActuales(){ const o = {}; Object.keys(extras).forEach((c) => { if (byCode[c] && extras[c].length) o[c] = extras[c].slice(); }); return o; }
   function catalogoActual(){
     return { c: cats, p: prods.map((p) => { const a = [p.code, p.nombre, p.marca, p.pvp, p.ci, p.agotado ? 1 : 0]; if (p.stock != null) a.push(p.stock); return a; }), d: descripciones(), x: extrasActuales(), i: Object.assign({}, info),
-      f: Array.from(new Set([...conFoto, ...Object.keys(fotosLocales)])).filter((c) => byCode[c]).sort(), fecha: hoy() };
+      f: Array.from(new Set([...conFoto, ...Object.keys(fotosLocales)])).filter((c) => byCode[c]).sort(), fecha: hoy(), ts: Date.now() };
   }
   function hoy(){ const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 
@@ -1739,7 +1739,8 @@ a.icard svg{stroke:var(--wa)}
     c.textContent = partes.length ? 'Por publicar: ' + partes.join(' y ') : 'Sin cambios por publicar';
     c.className = 'chip' + (partes.length ? ' warn' : '');
   }
-  function guardarCatLocal(){ ls.set('mass_cat_local', catalogoActual()); pintarPendientes(); }
+  let tsServidor = 0;   // publicación sobre la que se hicieron los cambios locales
+  function guardarCatLocal(){ ls.set('mass_cat_local', Object.assign(catalogoActual(), { baseTs: tsServidor })); pintarPendientes(); }
 
   function reducir(file){
     return new Promise((resolve, reject) => {
@@ -2512,9 +2513,19 @@ a.icard svg{stroke:var(--wa)}
   if ('serviceWorker' in navigator) window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
 
   // ---------- inicio ----------
-  const local = ls.get('mass_cat_local', null);
+  let local = ls.get('mass_cat_local', null);
   fetch('catalogo.json', { cache: 'no-cache' }).then((r) => { if (!r.ok) throw 0; return r.json(); })
     .then((d) => {
+      tsServidor = Number(d.ts) || 0;
+      if (local && tsServidor > (Number(local.baseTs) || 0)){
+        // Se publicó algo más nuevo (por ejemplo desde POS MASS MF): manda lo publicado;
+        // de los cambios locales solo se conservan descripciones, especificaciones, extras y textos.
+        local = Object.assign({}, d, { d: Object.assign({}, d.d || {}, local.d || {}), x: Object.assign({}, d.x || {}, local.x || {}),
+          i: Object.assign({}, local.i || {}, d.i || {}), baseTs: tsServidor });
+        const igual = JSON.stringify([local.d, local.x, local.i]) === JSON.stringify([d.d || {}, d.x || {}, d.i || {}]);
+        if (igual){ ls.del('mass_cat_local'); local = null; } else ls.set('mass_cat_local', local);
+        setTimeout(() => toast('El catálogo se actualizó con la última publicación' + (d.pub ? ' de ' + d.pub : '') + '.'), 800);
+      }
       if (local){   // cambios pendientes en este equipo: conservar también las fotos publicadas desde otro lugar
         local.f = Array.from(new Set([...(local.f || []), ...(d.f || [])]));
         local.x = Object.assign({}, d.x || {}, local.x || {});
